@@ -1,10 +1,10 @@
 <template>
   <div
     class="card"
-    :class="{ pile, animate }"
+    :class="{ pile, animate, hidden, noTransition }"
     :style="{
       marginTop,
-      transform: animate ? animate : pile
+      transform: forceTransform ? forceTransform : animate ? animate : pile
         ? `rotate(${pileRotate}) scale(.95) translateX(${offsetX}px) translateY(${offsetY}px) !important`
         : `rotate(${rotate})`,
       backgroundPositionY: -bgY + 'px',
@@ -64,6 +64,30 @@ export default {
       type: String,
       default: ""
     },
+    other: {
+      type: Boolean,
+      default: false
+    },
+    left: {
+      type: Boolean,
+      default: false
+    },
+    top: {
+      type: Boolean,
+      default: false
+    },
+    forceTransform: {
+      type: String,
+      default: ""
+    },
+    hidden: {
+      type: Boolean,
+      default: false
+    },
+    noTransition: {
+      type: Boolean,
+      default: false
+    }
   },
   methods: {
     removeCard() {
@@ -136,12 +160,21 @@ export default {
     const margin = 1.4 * (this.index - this.length / 2);
     const rotate = 0.5 * margin;
 
-    if (margin < 0) {
-      this.marginTop = margin * -1 + "px";
-      this.rotate = rotate + "deg";
+    if (!this.other) {
+      if (margin < 0) {
+        this.marginTop = margin * -1 + "px";
+        this.rotate = rotate + "deg";
+      } else {
+        this.marginTop = margin + "px";
+        this.rotate = rotate + "deg";
+
+      }
     } else {
-      this.marginTop = margin + "px";
-      this.rotate = rotate + "deg";
+      this.marginTop = this.left ? margin * -13 + "px" : margin * 13 + "px";
+    }
+
+    if (this.top) {
+      this.marginTop = 0;
     }
 
     this.calculateColor();
@@ -158,9 +191,17 @@ export default {
   background-size: 1317%;
   border-radius: 14px;
   box-shadow: 0px 0px 15px 0px #00000073;
-  transition: transform 0.3s ease, margin-left 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s ease, margin-left 0.2s ease, box-shadow 0.2s ease, width 0.2s ease;
   transition-delay: 0.2s;
   cursor: pointer;
+
+  &.noTransition {
+    transition: margin-left 0.2s ease, box-shadow 0.2s ease, width 0.2s ease;
+  }
+
+  &.hidden {
+    opacity: 0;
+  }
 
   &:not(:first-of-type) {
     margin-left: -60px;
