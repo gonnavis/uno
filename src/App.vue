@@ -77,7 +77,6 @@
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" ref="topCard" :forceTransform="topCardTransform" :noTransition="!topCardTransform ? true : false" />
     </div>
-    <button class="addcard" @click="addCard()">Add card</button>
   </div>
 </template>
 
@@ -191,14 +190,6 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-}
-
-.addcard {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: white;
-  padding: 10px;
 }
 
 .stack {
