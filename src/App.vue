@@ -67,7 +67,7 @@
         :top="true"
       />
     </div>
-    <div class="stack">
+    <div class="stack" @click="canDraw ? addCard() : null">
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" />
@@ -77,7 +77,7 @@
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" ref="topCard" :forceTransform="topCardTransform" :noTransition="!topCardTransform ? true : false" />
     </div>
-    <button class="addcard" @click="addCard">Add card</button>
+    <button class="addcard" @click="addCard()">Add card</button>
   </div>
 </template>
 
@@ -93,6 +93,7 @@ export default {
   data() {
     return {
       topCardTransform: null,
+      canDraw: false,
       pile: [],
       cards: [
         { color: "red", number: 0, id: uniqid.time() },
@@ -121,7 +122,7 @@ export default {
       e.card.id = uniqid.time();
       this.pile.push(e.card);
     },
-    addCard() {
+    addCard(person = "you") {
       let colors = ["red", "green", "yellow", "blue" ]
       let color = colors[Math.floor(Math.random() * 4)];
       
@@ -144,7 +145,7 @@ export default {
       this.cards.push(card);
 
       const observer = new MutationObserver((mutations, me) => {
-        const element = document.querySelector(`.cards.you .card:nth-of-type(${this.cards.length})`)
+        const element = document.querySelector(`.cards.${person} .card:nth-of-type(${this.cards.length})`)
 
         if (element) {
           const { x, y } = this.$refs.topCard.$el.getBoundingClientRect();
@@ -159,7 +160,7 @@ export default {
           setTimeout(() => {
             this.cards.splice(this.cards.length - 1, 1, { ...card, hidden: false }); 
             this.topCardTransform = null;
-          }, 500)
+          }, 460)
 
           me.disconnect(); // stop observing
           return;
@@ -202,12 +203,32 @@ body {
 
 .stack {
   position: absolute;
-  left: 100px;
-  bottom: 200px;
+  left: 60px;
+  bottom: 290px;
+  cursor: pointer;
 
   .card {
     pointer-events: none;
-    transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) !important;
+    transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) scale(.85) !important;
+    cursor: pointer;
+
+    &.draw {
+      animation: pulse infinite 3s ease;
+
+      @keyframes pulse {
+        from {
+          box-shadow: 0px 0px 5px 4px #ffe23f, inset 0px 0px 3px 3px #ffe448;
+        }
+
+        50% {
+          box-shadow: 0px 0px 14px 14px #ffe23f, inset 0px 0px 3px 3px #ffe448;
+        }
+
+        to {
+          box-shadow: 0px 0px 3px 2px #ffe23f, inset 0px 0px 3px 3px #ffe448;
+        }
+      }
+    }
     
     &:not(:first-of-type) {
       margin-left: 0;
@@ -216,27 +237,27 @@ body {
     }
 
     &:nth-of-type(6) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-3px, 3px) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-2px, 2px) scale(.85) !important;
     }
 
     &:nth-of-type(5) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-6px, 6px) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-4px, 4px) scale(.85) !important;
     }
 
     &:nth-of-type(4) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-9px, 9px) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-6px, 6px) scale(.85) !important;
     }
 
     &:nth-of-type(3) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-12px, 12px) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-8px, 8px) scale(.85) !important;
     }
 
     &:nth-of-type(2) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-15px, 15px) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-10px, 10px) scale(.85) !important;
     }
 
     &:nth-of-type(1) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-18px, 18px) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-12px, 12px) scale(.85) !important;
     }
   }
 }
