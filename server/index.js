@@ -6,7 +6,6 @@ const uniqid = require("uniqid");
 
 io.on("connection", socket => {
     console.log("connection")
-    socket.emit("connected", connection)
 
     socket.on("disconnect", () => {
       console.log("disconnection")

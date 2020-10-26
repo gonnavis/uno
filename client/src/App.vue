@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    
     <div class="pile">
       <Card  
         v-for="(card) in pile" 
@@ -84,6 +85,9 @@
 import Card from './components/Card.vue'
 import uniqid from "uniqid";
 
+import io from "socket.io-client";
+const socket = io("http://localhost:3000")
+
 export default {
   name: 'App',
   components: {
@@ -93,6 +97,8 @@ export default {
     return {
       topCardTransform: null,
       canDraw: false,
+      roomId: "",
+      host: null,
       pile: [],
       cards: [
         { color: "red", number: 0, id: uniqid.time() },
@@ -171,6 +177,12 @@ export default {
         subtree: true
       })
     } 
+  }, 
+  mounted() {
+    socket.on("created-room", id => {
+      this.roomId = id;
+      this.host = true;
+    })
   }
 }
 </script>
