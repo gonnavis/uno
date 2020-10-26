@@ -19,7 +19,21 @@ io.on("connection", socket => {
 
     socket.join(roomId);
     socket.emit("created-room", roomId)
-   }) 
+   })
+   
+  socket.on("join-room", code => {
+    const exists = io.sockets.adapter.rooms[code];
+    
+    if (exists) {
+      const clients = Object.keys(io.nsps["/"].adapter.rooms[code]).length;
+      if (clients >= 4) return socket.emit("join-room-response", { error: true, message: "Room is already full." });
+
+      socket.join(code);
+      return socket.emit("join-room-response", { error: false, message: "Joined room." });
+    } else {
+      return socket.emit("join-room-response", { error: true, message: "Room does not exist." })
+    }
+  })
 })
 
 const port = process.env.PORT || 3000;

@@ -1,6 +1,9 @@
 <template>
   <div class="game">
-      <div class="pile">
+    <div class="color-picker">
+      
+    </div>
+    <div class="pile">
       <Card  
         v-for="(card) in pile" 
         :key="card.id" 
@@ -22,12 +25,13 @@
         :length="cards.length" 
         :index="i"
         :hidden="card.hidden || false"
+        :playable="card.playable || false"
         @clicked="cardClicked"
       />
     </div>
     <div class="cards other right">
       <Card 
-        v-for="i in 8" 
+        v-for="i in right" 
         :key="i" 
         :color="'plus4'" 
         :number="6" 
@@ -40,7 +44,7 @@
     </div>
     <div class="cards other left">
       <Card 
-        v-for="i in 8" 
+        v-for="i in left" 
         :key="i" 
         :color="'plus4'" 
         :number="6" 
@@ -55,7 +59,7 @@
 
     <div class="cards other top">
       <Card 
-        v-for="i in 8" 
+        v-for="i in top" 
         :key="i" 
         :color="'plus4'" 
         :number="6" 
@@ -75,8 +79,9 @@
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" ref="topCard" :forceTransform="topCardTransform" :noTransition="!topCardTransform ? true : false" />
+      <Card :color="'plus4'" :number="6" ref="topCard" :forceTransform="topCardTransform" style="" :noTransition="!topCardTransform ? true : false" />
     </div>
+    <button @click="startGame" style="position: absolute; top: 0; right: 0; background: white; font-size: 1.2em; padding: 8px;">start game</button>
   </div>
 </template>
 
@@ -85,31 +90,86 @@ import Card from '../components/Card.vue'
 import uniqid from "uniqid";
 
 export default {
-  name: 'App',
+  name: "Game",
   components: {
     Card
+  },
+  props: {
+    host: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {
       topCardTransform: null,
       canDraw: false,
+      top: 0,
+      left: 0,
+      right: 0,
       pile: [],
-      cards: [
-        { color: "red", number: 0, id: uniqid.time() },
-        { color: "red", number: 9, id: uniqid.time() },
-        { color: "red", number: 11, id: uniqid.time() },
-        { color: "green", number: 3, id: uniqid.time() },
-        { color: "green", number: 7, id: uniqid.time() },
-        { color: "green", number: 12, id: uniqid.time() },
-        { color: "yellow", number: 3, id: uniqid.time() },
-        { color: "yellow", number: 11, id: uniqid.time() },
-        { color: "yellow", number: 13, id: uniqid.time() },
-        { color: "blue", number: 2, id: uniqid.time() },
-        { color: "blue", number: 5, id: uniqid.time() },
-      ]
+      cards: [],
+      started: false
+    }
+  },
+  watch: {
+    pile() {
+      this.findPlayable();
     }
   },
   methods: {
+    async giveCards(num, person = "you") {
+      for (let i = 0; i < num; i++) {
+        this.addCard(person); 
+        await this.sleep(500);
+      }
+      
+      return;
+    },
+    sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    },
+    async startGame() {
+      if (!this.host) return;
+
+      this.cards = [];
+
+      await this.giveCards(7);
+      await this.giveCards(7, "left");
+      await this.giveCards(7, "top");
+      await this.giveCards(7, "right");
+    },
+    findPlayable() {
+      const indexes = [];
+      const topCard = this.pile[this.pile.length - 1];
+
+      if (!topCard) {
+        this.cards.forEach(card => card.playable = true);
+      }
+
+      this.cards.forEach((card, i) => {
+        card.playable = false;
+
+        if (card.color === "plus4" || card.color === "changeColor") {
+          return indexes.push(i);
+        } else if (card.color === topCard.color) {
+          return indexes.push(i);
+        } else if (card.number === topCard.number) {
+          return indexes.push(i);
+        } else {
+          return;
+        }
+      })
+
+      indexes.forEach(i => {
+        const card = {...this.cards[i]};
+
+        card.playable = true;
+        card.id = uniqid.time();
+
+        this.cards.splice(i, 1, card);
+      })
+    },
     cardClicked(e) {
       this.cards.splice(e.index, 1);
       this.cards = [...this.cards];
@@ -122,44 +182,68 @@ export default {
       this.pile.push(e.card);
     },
     addCard(person = "you") {
-      let colors = ["red", "green", "yellow", "blue" ]
-      let color = colors[Math.floor(Math.random() * 4)];
-      
-      let number = Math.floor(Math.random() * 13) + 1;
-      if (number === 10) number = 0;
+      let card;
 
-      // special card chance
-      if (Math.random() < 0.1) {
-        color = ["plus4", "changeColor"][Math.floor(Math.random() * 2)];
-        number = 1;
+      if (person === "you") {
+        let colors = ["red", "green", "yellow", "blue" ];
+        let color = colors[Math.floor(Math.random() * 4)];
+        
+        let number = Math.floor(Math.random() * 13) + 1;
+        if (number === 10) number = 0;
+
+        // special card chance
+        if (Math.random() < 0.1) {
+          color = ["plus4", "changeColor"][Math.floor(Math.random() * 2)];
+          number = 1;
+        }
+
+        card = {
+          color,
+          number,
+          id: uniqid.time(),
+          hidden: true
+        }
+
+        this.cards.push(card);
+      } else {
+        this[person]++;
       }
-
-      const card = {
-        color,
-        number,
-        id: uniqid.time(),
-        hidden: true
-      }
-
-      this.cards.push(card);
 
       const observer = new MutationObserver((mutations, me) => {
-        const element = document.querySelector(`.cards.${person} .card:nth-of-type(${this.cards.length})`)
+        let length = this.cards.length;
 
+        if (person !== "you") {
+          length = person === "right" ? 1 : this[person];
+        }
+
+        const element = document.querySelector(`.cards.${person} .card:nth-of-type(${length})`);
+        
         if (element) {
           const { x, y } = this.$refs.topCard.$el.getBoundingClientRect();
           const { x: desX, y: desY } = element.getBoundingClientRect();
-          let rotate = element.style.transform.match(/[rotate](.*)/)[0];
-          rotate = rotate.slice(7, rotate.length - 1);
-          console.log(rotate);
 
-          this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${(y - desY) * -1}px) rotate(${rotate}) rotateY(180deg) !important`;
+          if (person === "left") {
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${(y - desY) * -1}px) rotateX(-25deg) rotateY(52deg) scale(.66) !important`;
+          } else if (person === "right") {
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${(y - desY) * -1}px) rotateX(25deg) rotateY(52deg) scale(.66) !important`;
+          } else if (person === "top") {
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${(y - desY) * -1}px) rotateX(-30deg) scale(.65) !important`;
+          } else {
+            let rotate = element.style.transform.match(/[rotate](.*)/)[0];
+            rotate = rotate.slice(7, rotate.length - 1);
+
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${(y - desY) * -1}px) rotate(${rotate}) rotateY(180deg) !important`;
+          }
+
           this.$refs.topCard.$el.style.zIndex = 1000;
 
           setTimeout(() => {
-            this.cards.splice(this.cards.length - 1, 1, { ...card, hidden: false }); 
+            if (person === "you") {
+              this.cards.splice(this.cards.length - 1, 1, { ...card, hidden: false }); 
+            }
+
             this.topCardTransform = null;
-          }, 460)
+          }, 450)
 
           me.disconnect(); // stop observing
           return;
@@ -175,7 +259,18 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
+.game {
+  width: 100%;
+  height: 100%;
+  background-color: #780E09;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
 .stack {
   position: absolute;
   left: 60px;
@@ -254,9 +349,14 @@ export default {
   position: absolute;
 }
 
+.you {
+  .card {
+    filter: brightness(.7);
+  }
+}
+
 .other {
   position: absolute;
-  top: 20%;
 
   .card {
     pointer-events: none;
@@ -264,6 +364,7 @@ export default {
 
   &.right {
     right: 130px;
+    bottom: 47.6%;
 
     .card {
       transform: rotateX(25deg) rotateY(52deg) scale(.66);

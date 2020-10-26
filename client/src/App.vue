@@ -1,32 +1,52 @@
 <template>
   <div id="app">
-    <router-view />
+    <router-view @join-room="joinRoom" @create-room="createRoom" :response="response" :host="host" />
   </div>
 </template>
 
 <script>
-import Card from './components/Card.vue'
-import uniqid from "uniqid";
-
 import io from "socket.io-client";
 const socket = io("http://localhost:3000")
 
 export default {
   name: 'App',
-  components: {
-    Card
-  },
   data() {
     return {
       roomId: "",
       host: null,
+      response: {
+        error: null,
+        message: null
+      }
+    }
+  },
+  methods: {
+    joinRoom(code) {
+      if (this.roomId) return;
+
+      socket.emit("join-room", code);
+    },
+    createRoom() {
+      socket.emit("create-room");
     }
   },
   mounted() {
     socket.on("created-room", id => {
       this.roomId = id;
       this.host = true;
+
+      this.$router.push({ name: "Game" })
     })
+
+    socket.on("join-room-response", res => {
+      this.response = res;
+    })
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("roomCode")) {
+      socket.emit("join-room", params.get("roomCode"));
+    }
   }
 }
 </script>

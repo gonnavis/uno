@@ -1,7 +1,7 @@
 <template>
   <div
     class="card"
-    :class="{ pile, animate, hidden, noTransition }"
+    :class="{ pile, animate, hidden, noTransition, playable }"
     :style="{
       marginTop,
       transform: forceTransform ? forceTransform : animate ? animate : pile
@@ -87,6 +87,10 @@ export default {
     noTransition: {
       type: Boolean,
       default: false
+    },
+    playable: {
+      type: Boolean,
+      default: false
     }
   },
   methods: {
@@ -157,8 +161,8 @@ export default {
     },
   },
   mounted() {
-    const margin = 1.4 * (this.index - this.length / 2);
-    const rotate = 0.5 * margin;
+    const margin = 1.3 * (this.index - this.length / 2);
+    const rotate = 0.35 * margin;
 
     if (!this.other) {
       if (margin < 0) {
@@ -191,9 +195,35 @@ export default {
   background-size: 1317%;
   border-radius: 14px;
   box-shadow: 0px 0px 15px 0px #00000073;
-  transition: transform 0.3s ease, margin-left 0.2s ease, box-shadow 0.2s ease, width 0.2s ease;
+  transition: transform 0.3s ease, margin-left 0.2s ease, box-shadow 0.2s ease, width 0.2s ease, filter 0.2s ease;
   transition-delay: 0.2s;
   cursor: pointer;
+  pointer-events: none;
+
+  &.playable {
+    transform: translateX(-15px) translateY(-15px) rotate(-4deg) !important;
+    animation: pulse infinite 3s ease;
+    filter: brightness(1);
+    pointer-events: all;
+
+    @keyframes pulse {
+      from {
+        box-shadow: 0px 0px 2px 1px #ffe23f, inset 0px 0px 2px 2px #ffe448;
+      }
+
+      50% {
+        box-shadow: 0px 0px 6px 4px #ffe23f, inset 0px 0px 3px 3px #ffe448;
+      }
+
+      to {
+        box-shadow: 0px 0px 2px 1px #ffe23f, inset 0px 0px 2px 2px #ffe448;
+      }
+    }
+
+    &:hover {
+      animation: none;
+    }
+  }
 
   &.noTransition {
     transition: margin-left 0.2s ease, box-shadow 0.2s ease, width 0.2s ease;
@@ -204,7 +234,7 @@ export default {
   }
 
   &:not(:first-of-type) {
-    margin-left: -60px;
+    margin-left: -70px;
   }
 
   &:hover {
