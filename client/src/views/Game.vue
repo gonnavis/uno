@@ -135,7 +135,7 @@ export default {
       pile: [],
       cards: [],
       started: false,
-      playDirectionReverse: true
+      playDirectionReverse: false
     }
   },
   watch: {
