@@ -14,7 +14,7 @@
         :pile="true" 
       />
     </div>
-    <div class="direction" :class="{ reverse: playDirectionReverse }"></div>
+    <div class="direction" :class="{ reverse: !playDirectionReverse }"></div>
     <div class="cards you">
       <Card 
         v-for="(card, i) in cards" 
