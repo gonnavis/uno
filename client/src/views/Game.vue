@@ -1,7 +1,6 @@
 <template>
   <div class="game">
     <div class="color-picker">
-      
     </div>
     <div class="pile">
       <Card  
@@ -15,6 +14,7 @@
         :pile="true" 
       />
     </div>
+    <div class="direction" :class="{ reverse: playDirectionReverse }"></div>
     <div class="cards you">
       <Card 
         v-for="(card, i) in cards" 
@@ -31,7 +31,7 @@
     </div>
     <div class="cards other right">
       <Card 
-        v-for="i in right" 
+        v-for="i in right.count" 
         :key="i" 
         :color="'plus4'" 
         :number="6" 
@@ -44,7 +44,7 @@
     </div>
     <div class="cards other left">
       <Card 
-        v-for="i in left" 
+        v-for="i in left.count" 
         :key="i" 
         :color="'plus4'" 
         :number="6" 
@@ -59,7 +59,7 @@
 
     <div class="cards other top">
       <Card 
-        v-for="i in top" 
+        v-for="i in top.count" 
         :key="i" 
         :color="'plus4'" 
         :number="6" 
@@ -81,7 +81,7 @@
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" ref="topCard" :forceTransform="topCardTransform" style="" :noTransition="!topCardTransform ? true : false" />
     </div>
-    <button @click="startGame" style="position: absolute; top: 0; right: 0; background: white; font-size: 1.2em; padding: 8px;">start game</button>
+    <button @click="$emit('start-game')" v-if="!started && host && room.players.length === 4" style="position: absolute; top: 0; right: 0; background: white; font-size: 1.2em; padding: 8px;">start game</button>
   </div>
 </template>
 
@@ -98,40 +98,108 @@ export default {
     host: {
       type: Boolean,
       default: false
+    },
+    start: {
+      type: Boolean,
+      default: false
+    },
+    room: {
+      type: Object,
+      default() {
+        return {
+          players: []
+        };
+      }
+    },
+    socketId: {
+      type: String,
+      default: ""
     }
   },
   data() {
     return {
       topCardTransform: null,
       canDraw: false,
-      top: 0,
-      left: 0,
-      right: 0,
+      top: {
+        count: 0,
+        id: ""
+      },
+      left: {
+        count: 0,
+        id: ""
+      },
+      right: {
+        count: 0,
+        id: ""
+      },
       pile: [],
       cards: [],
-      started: false
+      started: false,
+      playDirectionReverse: true
     }
   },
   watch: {
     pile() {
       this.findPlayable();
+    },
+    start() {
+      if (this.start) {
+        this.startGame();
+      }
+    },
+    room() {
+      this.setPlayers()
     }
   },
   methods: {
+    setPlayers() {
+      if (this.room.players.length !== 4) return;
+      const binds = [ "right", "top", "left" ]
+      const me = this.room.players.indexOf(this.socketId);
+      let i = me + 1;
+      let count = 0;
+
+      do {
+        if (i > this.room.players.length - 1) {
+          i = 0;
+        }
+
+        this[binds[count]].id = this.room.players[i];
+
+        count++;
+        i++;
+      } while (i !== me);
+    },
+    sortCards() {
+      const red = this.cards.filter(card => card.color === "red").sort((a, b) => a.number - b.number);
+      const green = this.cards.filter(card => card.color === "green").sort((a, b) => a.number - b.number);
+      const yellow = this.cards.filter(card => card.color === "yellow").sort((a, b) => a.number - b.number);
+      const blue = this.cards.filter(card => card.color === "blue").sort((a, b) => a.number - b.number);
+      const changeColor = this.cards.filter(card => card.color === "changeColor");
+      const plus4 = this.cards.filter(card => card.color === "plus4");
+
+      this.cards = [
+        ...red,
+        ...green,
+        ...yellow,
+        ...blue,
+        ...changeColor,
+        ...plus4
+      ];
+    },
     async giveCards(num, person = "you") {
       for (let i = 0; i < num; i++) {
         this.addCard(person); 
         await this.sleep(500);
       }
       
+      person === "you" ? this.sortCards() : null;
       return;
     },
     sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     },
     async startGame() {
-      if (!this.host) return;
-
       this.cards = [];
 
       await this.giveCards(7);
@@ -206,14 +274,14 @@ export default {
 
         this.cards.push(card);
       } else {
-        this[person]++;
+        this[person].count++;
       }
 
       const observer = new MutationObserver((mutations, me) => {
         let length = this.cards.length;
 
         if (person !== "you") {
-          length = person === "right" ? 1 : this[person];
+          length = person === "right" ? 1 : this[person].count;
         }
 
         const element = document.querySelector(`.cards.${person} .card:nth-of-type(${length})`);
@@ -255,6 +323,9 @@ export default {
         subtree: true
       })
     } 
+  },
+  mounted() {
+    this.setPlayers();
   }
 }
 </script>
@@ -269,6 +340,61 @@ export default {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+.direction {
+  display: inline-block;
+  position:absolute;
+  vertical-align:middle;
+  width: 350px;
+  height: 350px;
+  border: 14px solid transparent;
+  border-top-color:#ffffff50;
+  border-bottom-color:#ffffff50;
+  border-radius: 50%;
+  animation: rotate 8s linear infinite;
+  transform: scale(1.2) rotateX(55deg);
+
+  &.reverse {
+    animation-direction: reverse;
+
+    &::after {
+      top: 36px;
+      left: 8px;
+      transform: rotate(-133deg);
+    }
+
+    &::before {
+      bottom: 36px;
+      right: 8px;
+      left: auto;
+      transform: rotate(44deg);
+    }
+  }
+
+  &::after, &::before {
+    position:absolute;
+    content: "";
+    width:0; height:0;
+    border: 20px solid transparent;
+    border-bottom-color:#ffffff50;
+  }
+
+  &::after {
+    top: 36px;
+    right: 8px;
+    transform: rotate(135deg);
+  }
+
+  &::before {
+    bottom: 36px;
+    left: 8px;
+    transform: rotate(-45deg);
+  }
+
+  @keyframes rotate {
+    to { transform: scale(1.2) rotateX(55deg) rotate(360deg); }
+  }
 }
 
 .stack {

@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <router-view @join-room="joinRoom" @create-room="createRoom" :response="response" :host="host" />
+    <router-view :start="start" :socketId="socketId" :room="room" @start-game="startGame" @join-room="joinRoom" @create-room="createRoom" :response="response" :host="host" />
   </div>
 </template>
 
@@ -13,11 +13,16 @@ export default {
   data() {
     return {
       roomId: "",
+      start: false,
       host: null,
       response: {
         error: null,
         message: null
-      }
+      },
+      room: {
+        players: []
+      },
+      socketId: ""
     }
   },
   methods: {
@@ -28,24 +33,42 @@ export default {
     },
     createRoom() {
       socket.emit("create-room");
+    },
+    startGame() {
+      socket.emit("start-game");
     }
   },
   mounted() {
+    socket.on("connect", () => this.socketId = socket.id);
+
     socket.on("created-room", id => {
       this.roomId = id;
       this.host = true;
 
-      this.$router.push({ name: "Game" })
+      this.$router.push({ name: "Game", query: { roomCode: this.roomId } })
     })
 
     socket.on("join-room-response", res => {
       this.response = res;
+
+      if (!this.response.error) {
+        this.$router.push({ name: "Game", query: { roomCode: this.room.id } })
+      }
     })
 
-    const params = new URLSearchParams(window.location.search);
+    socket.on("start-the-game", () => {
+      this.start = true;
+    })
 
-    if (params.get("roomCode")) {
-      socket.emit("join-room", params.get("roomCode"));
+    socket.on("room-data", data => {
+      this.room = data;
+    })
+
+    const roomCode = this.$route.query.roomCode;
+
+    if (roomCode) {
+      this.$router.push({ name: "Home", query: { roomCode: roomCode } });
+      socket.emit("join-room", roomCode);
     }
   }
 }
