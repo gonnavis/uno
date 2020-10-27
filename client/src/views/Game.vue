@@ -25,13 +25,14 @@
         :length="cards.length" 
         :index="i"
         :hidden="card.hidden || false"
-        :playable="card.playable || false"
+        :playable="card.playable && turn === 'you' || false"
         @clicked="cardClicked"
       />
     </div>
     <div class="cards other right">
       <Card 
         v-for="i in right.count" 
+        :ref="'right' + i"
         :key="i" 
         :color="'plus4'" 
         :number="6" 
@@ -46,6 +47,7 @@
       <Card 
         v-for="i in left.count" 
         :key="i" 
+        :ref="'left' + i"
         :color="'plus4'" 
         :number="6" 
         :style="{ zIndex: i }" 
@@ -60,6 +62,7 @@
     <div class="cards other top">
       <Card 
         v-for="i in top.count" 
+        :ref="'top' + i"
         :key="i" 
         :color="'plus4'" 
         :number="6" 
@@ -81,7 +84,7 @@
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" ref="topCard" :forceTransform="topCardTransform" style="" :noTransition="!topCardTransform ? true : false" />
     </div>
-    <button @click="$emit('start-game')" v-if="!started && host && room.players.length === 4" style="position: absolute; top: 0; right: 0; background: white; font-size: 1.2em; padding: 8px;">start game</button>
+    <button @click="$emit('start-game')"  style="position: absolute; top: 0; right: 0; background: white; font-size: 1.2em; padding: 8px;">start game</button>
   </div>
 </template>
 
@@ -114,12 +117,17 @@ export default {
     socketId: {
       type: String,
       default: ""
+    },
+    currentPlayerId: {
+      type: String,
+      default: ""
     }
   },
   data() {
     return {
       topCardTransform: null,
       canDraw: false,
+      turn: null,
       top: {
         count: 0,
         id: ""
@@ -149,9 +157,46 @@ export default {
     },
     room() {
       this.setPlayers()
+    },
+    currentPlayerId(val) {
+      this.turn = this.getPosFromId(val);
+    },
+    turn() {
+      if (this.turn === "you") {
+        this.findPlayable();
+      }
     }
   },
   methods: {
+    getPosFromId(id) {
+      switch (id) {
+        case this.left.id:
+          return "left";
+        case this.right.id:
+          return "right";
+        case this.top.id:
+          return "top";
+        default: 
+          return "you";
+      }
+    },
+    otherPlayedCard(id, card) {
+      const pos = this.getPosFromId(id);
+      card.pos = pos;
+
+      if (pos !== "you") {
+        const ref = pos  + this[pos].count;
+        this.$refs[ref][0].clicked({ target: this.$refs[ref][0].$el }, card);
+      }
+    },
+    nextPlayer() {
+      // switch to next player based on play direction
+      if (this.playDirectionReverse) {
+        this.$emit("current-player", this.left.id);
+      } else {
+        this.$emit("current-player", this.right.id);
+      }
+    },
     setPlayers() {
       if (this.room.players.length !== 4) return;
       const binds = [ "right", "top", "left" ]
@@ -159,16 +204,20 @@ export default {
       let i = me + 1;
       let count = 0;
 
-      do {
+      while (i !== me) {
         if (i > this.room.players.length - 1) {
           i = 0;
+        }
+
+        if (!this[binds[count]]) {
+          break;
         }
 
         this[binds[count]].id = this.room.players[i];
 
         count++;
         i++;
-      } while (i !== me);
+      }
     },
     sortCards() {
       const red = this.cards.filter(card => card.color === "red").sort((a, b) => a.number - b.number);
@@ -206,6 +255,11 @@ export default {
       await this.giveCards(7, "left");
       await this.giveCards(7, "top");
       await this.giveCards(7, "right");
+
+      if (this.host) {
+        this.findPlayable();
+        this.$emit("current-player", this.socketId);
+      }
     },
     findPlayable() {
       const indexes = [];
@@ -213,6 +267,16 @@ export default {
 
       if (!topCard) {
         this.cards.forEach(card => card.playable = true);
+
+        this.cards.forEach((cardOld, i) => {
+          const card = {...cardOld};
+
+          card.playable = true;
+          card.id = uniqid.time();
+
+          this.cards.splice(i, 1, card);
+        })
+        return;
       }
 
       this.cards.forEach((card, i) => {
@@ -237,17 +301,49 @@ export default {
 
         this.cards.splice(i, 1, card);
       })
+
+      if (indexes.length === 0) this.canDraw = true;
     },
     cardClicked(e) {
-      this.cards.splice(e.index, 1);
-      this.cards = [...this.cards];
+      // console.log({...e});
+      // console.log(e);
+      // console.log(e.other);
+
+      if (!e.card.other) {
+        this.cards.splice(e.index, 1);
+        this.cards = [...this.cards];
+
+        e.card.id = uniqid.time();
+        this.pile.push(e.card);
+
+        this.$emit("play-card", {
+          id: this.socketId,
+          card: {
+            color: e.card.color,
+            number: e.card.number
+          }
+        })
+
+        this.nextPlayer();
+      } else {
+        const card = {
+          ...e.card.other,
+          offsetX: e.card.offsetX,
+          offsetY: e.card.offsetY,
+          rotate: e.card.rotate
+        };
+
+        this[card.pos].count--;
+        this[card.pos] = { ...this[card.pos] };
+
+        card.id = uniqid.time();
+        
+        this.pile.push(card);
+      }
 
       if (this.pile.length >= 12) {
         this.pile.unshift();
       }
-
-      e.card.id = uniqid.time();
-      this.pile.push(e.card);
     },
     addCard(person = "you") {
       let card;

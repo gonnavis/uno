@@ -106,7 +106,7 @@ export default {
         }
       });
     },
-    clicked(e) {
+    clicked(e, other) {
       if (this.pile) return;
 
       const { x, y } = e.target.getBoundingClientRect()
@@ -124,7 +124,8 @@ export default {
       this.offsets = { 
         offsetX,
         offsetY,
-        rotate
+        rotate,
+        other: other
       }
 
       this.emit = true;

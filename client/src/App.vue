@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <router-view :start="start" :socketId="socketId" :room="room" @start-game="startGame" @join-room="joinRoom" @create-room="createRoom" :response="response" :host="host" />
+    <router-view ref="router" @current-player="currentPlayer" @play-card="playCard" :currentPlayerId="currentPlayerId" :start="start" :socketId="socketId" :room="room" @start-game="startGame" @join-room="joinRoom" @create-room="createRoom" :response="response" :host="host" />
   </div>
 </template>
 
@@ -15,6 +15,7 @@ export default {
       roomId: "",
       start: false,
       host: null,
+      currentPlayerId: "",
       response: {
         error: null,
         message: null
@@ -36,6 +37,12 @@ export default {
     },
     startGame() {
       socket.emit("start-game");
+    },
+    currentPlayer(id) {
+      socket.emit("current-player", id);
+    },
+    playCard(data) {
+      socket.emit("play-card", data)
     }
   },
   mounted() {
@@ -62,6 +69,14 @@ export default {
 
     socket.on("room-data", data => {
       this.room = data;
+    })
+
+    socket.on("current-player-update", id => {
+      this.currentPlayerId = id;
+    })
+
+    socket.on("played-card", data => {
+      this.$refs.router.otherPlayedCard(data.id, data.card);
     })
 
     const roomCode = this.$route.query.roomCode;

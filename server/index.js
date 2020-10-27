@@ -45,6 +45,14 @@ io.on("connection", socket => {
       return socket.emit("join-room-response", { error: true, message: "Room does not exist." })
     }
   })
+
+  socket.on("current-player", id => {
+    io.to(socket.roomId).emit("current-player-update", id)
+  })
+
+  socket.on("play-card", data => {
+    io.to(socket.roomId).emit("played-card", data)
+  })
   
   socket.on("start-game", () => {
     io.to(socket.roomId).emit("start-the-game")
