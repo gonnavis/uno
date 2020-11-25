@@ -126,7 +126,6 @@ export default {
   data() {
     return {
       topCardTransform: null,
-      canDraw: false,
       turn: null,
       top: {
         count: 0,
@@ -144,6 +143,15 @@ export default {
       cards: [],
       started: false,
       playDirectionReverse: false
+    }
+  },
+  computed: {
+    canDraw() {
+      if (this.turn === "you" && this.cards.filter(card => card.playable).length > 0) {
+        return true
+      } else {
+        return false
+      }
     }
   },
   watch: {
