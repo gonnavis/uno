@@ -43,6 +43,14 @@ export default {
     },
     playCard(data) {
       socket.emit("play-card", data)
+
+      const { card } = data;
+
+      if (card.number === 11) {
+        socket.emit("add-cards", { id: data.nextPlayer, amount: 2 });
+      } else if (card.number === 13) {
+        socket.emit("reverse-play");
+      }
     }
   },
   mounted() {

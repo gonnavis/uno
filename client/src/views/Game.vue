@@ -146,11 +146,14 @@ export default {
     }
   },
   computed: {
+    playableCardsCount() {
+      return this.cards.filter(card => card.playable).length;
+    },
     canDraw() {
-      if (this.turn === "you" && this.cards.filter(card => card.playable).length > 0) {
-        return true
-      } else {
+      if (this.turn === "you" && this.playableCardsCount > 0) {
         return false
+      } else {
+        return true
       }
     }
   },
@@ -192,18 +195,17 @@ export default {
       const pos = this.getPosFromId(id);
       card.pos = pos;
 
-      if (pos !== "you") {
-        const ref = pos  + this[pos].count;
-        this.$refs[ref][0].clicked({ target: this.$refs[ref][0].$el }, card);
-      }
+      if (pos === "you") return ;
+
+      const ref = pos  + this[pos].count;
+      this.$refs[ref][0].clicked({ target: this.$refs[ref][0].$el }, card);
     },
-    nextPlayer() {
+    getNextPlayer() {
+      return this.playDirectionReverse ? this.left.id : this.right.id;
+    },
+    nextPlayer(player) {
       // switch to next player based on play direction
-      if (this.playDirectionReverse) {
-        this.$emit("current-player", this.left.id);
-      } else {
-        this.$emit("current-player", this.right.id);
-      }
+      this.$emit("current-player", player ? this.top.id : this.getNextPlayer());
     },
     setPlayers() {
       if (this.room.players.length !== 4) return;
@@ -244,10 +246,10 @@ export default {
         ...plus4
       ];
     },
-    async giveCards(num, person = "you") {
+    async giveCards(num, person = "you", anims = true) {
       for (let i = 0; i < num; i++) {
-        this.addCard(person); 
-        await this.sleep(500);
+        this.addCard(person, anims); 
+        if (anims) await this.sleep(500);
       }
       
       person === "you" ? this.sortCards() : null;
@@ -259,10 +261,10 @@ export default {
     async startGame() {
       this.cards = [];
 
-      await this.giveCards(7);
-      await this.giveCards(7, "left");
-      await this.giveCards(7, "top");
-      await this.giveCards(7, "right");
+      await this.giveCards(7, undefined, false);
+      await this.giveCards(7, "left", false);
+      await this.giveCards(7, "top", false);
+      await this.giveCards(7, "right", false);
 
       if (this.host) {
         this.findPlayable();
@@ -309,8 +311,6 @@ export default {
 
         this.cards.splice(i, 1, card);
       })
-
-      if (indexes.length === 0) this.canDraw = true;
     },
     cardClicked(e) {
       // console.log({...e});
@@ -326,13 +326,19 @@ export default {
 
         this.$emit("play-card", {
           id: this.socketId,
+          nextPlayer: this.getNextPlayer(),
           card: {
             color: e.card.color,
             number: e.card.number
           }
         })
 
-        this.nextPlayer();
+        if (e.card.number === 12) {
+          // skip next player if a skip card is played
+          this.nextPlayer("top");
+        } else {
+          this.nextPlayer();
+        }
       } else {
         const card = {
           ...e.card.other,
@@ -353,7 +359,7 @@ export default {
         this.pile.unshift();
       }
     },
-    addCard(person = "you") {
+    addCard(person = "you", anims) {
       let card;
 
       if (person === "you") {
@@ -373,13 +379,15 @@ export default {
           color,
           number,
           id: uniqid.time(),
-          hidden: true
+          hidden: anims
         }
 
         this.cards.push(card);
       } else {
         this[person].count++;
       }
+
+      if (!anims) return;
 
       const observer = new MutationObserver((mutations, me) => {
         let length = this.cards.length;
