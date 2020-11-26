@@ -47,9 +47,9 @@ export default {
       const { card } = data;
 
       if (card.number === 11) {
-        socket.emit("add-cards", { id: data.nextPlayer, amount: 2 });
+        socket.emit("give-cards", { id: data.nextPlayer, amount: 2 });
       } else if (card.number === 13) {
-        socket.emit("reverse-play");
+        socket.emit("reverse-play-direction");
       }
     }
   },
@@ -85,6 +85,14 @@ export default {
 
     socket.on("played-card", data => {
       this.$refs.router.otherPlayedCard(data.id, data.card);
+    })
+
+    socket.on("receive-cards", data => {
+      this.$refs.router.giveCards(data);
+    })
+
+    socket.on("play-direction-reversed", () => {
+      this.$refs.router.playDirectionReverse = !this.$refs.router.playDirectionReverse;
     })
 
     const roomCode = this.$route.query.roomCode;
