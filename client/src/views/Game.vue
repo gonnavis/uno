@@ -1,57 +1,63 @@
 <template>
   <div class="game">
-    <div class="color-picker">
+    <div v-if="pickColor" class="color-picker">
+      <div class="container">
+        <button @click="wildcardColor = 3" class="red"></button>
+        <button @click="wildcardColor = 5" class="green"></button>
+        <button @click="wildcardColor = 2" class="yellow"></button>
+        <button @click="wildcardColor = 4" class="blue"></button>
+      </div>
     </div>
     <div class="pile">
-      <Card  
-        v-for="(card) in pile" 
-        :key="card.id" 
-        :color="card.color" 
-        :number="card.number" 
+      <Card
+        v-for="card in pile"
+        :key="card.id"
+        :color="card.color"
+        :number="card.number"
         :offsetX="card.offsetX"
         :offsetY="card.offsetY"
         :pileRotate="card.rotate"
-        :pile="true" 
+        :pile="true"
       />
     </div>
     <div class="direction" :class="{ reverse: !playDirectionReverse }"></div>
     <div class="cards you">
-      <Card 
-        v-for="(card, i) in cards" 
-        :key="card.id" 
-        :color="card.color" 
-        :number="card.number" 
-        :style="{ zIndex: i }" 
-        :length="cards.length" 
+      <Card
+        v-for="(card, i) in cards"
+        :key="card.id"
+        :color="card.color"
+        :number="card.number"
+        :style="{ zIndex: i }"
+        :length="cards.length"
         :index="i"
         :hidden="card.hidden || false"
-        :playable="card.playable && turn === 'you' || false"
+        :playable="(card.playable && turn === 'you') || false"
         @clicked="cardClicked"
       />
     </div>
     <div class="cards other right">
-      <Card 
-        v-for="i in right.count" 
+      <Card
+        v-for="i in right.count"
         :ref="'right' + i"
-        :key="i" 
-        :color="'plus4'" 
-        :number="6" 
-        :style="{ zIndex: i }" 
-        :length="8" 
+        :key="i"
+        :color="'plus4'"
+        :number="6"
+        :style="{ zIndex: i }"
+        :length="8"
         :index="i"
         @clicked="cardClicked"
         :other="true"
       />
     </div>
     <div class="cards other left">
-      <Card 
-        v-for="i in left.count" 
-        :key="i" 
+      <Card
+        v-for="i in left.count"
+        :key="i"
         :ref="'left' + i"
-        :color="'plus4'" 
-        :number="6" 
-        :style="{ zIndex: i }" 
-        :length="8" 
+        :color="'plus4'"
+        :number="6"
+        :style="{ zIndex: i }"
+        :length="8"
         :index="i"
         @clicked="cardClicked"
         :other="true"
@@ -60,14 +66,14 @@
     </div>
 
     <div class="cards other top">
-      <Card 
-        v-for="i in top.count" 
+      <Card
+        v-for="i in top.count"
         :ref="'top' + i"
-        :key="i" 
-        :color="'plus4'" 
-        :number="6" 
-        :style="{ zIndex: i }" 
-        :length="8" 
+        :key="i"
+        :color="'plus4'"
+        :number="6"
+        :style="{ zIndex: i }"
+        :length="8"
         :index="i"
         @clicked="cardClicked"
         :other="true"
@@ -82,46 +88,65 @@
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" />
       <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" ref="topCard" :forceTransform="topCardTransform" style="" :noTransition="!topCardTransform ? true : false" />
+      <Card
+        :color="'plus4'"
+        :number="6"
+        ref="topCard"
+        :forceTransform="topCardTransform"
+        style=""
+        :noTransition="!topCardTransform ? true : false"
+      />
     </div>
-    <button @click="$emit('start-game')"  style="position: absolute; top: 0; right: 0; background: white; font-size: 1.2em; padding: 8px;">start game</button>
+    <button
+      @click="$emit('start-game')"
+      style="
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: white;
+        font-size: 1.2em;
+        padding: 8px;
+      "
+    >
+      start game
+    </button>
   </div>
 </template>
 
 <script>
-import Card from '../components/Card.vue'
+import Card from "../components/Card.vue";
 import uniqid from "uniqid";
 
 export default {
   name: "Game",
   components: {
-    Card
+    Card,
   },
   props: {
     host: {
       type: Boolean,
-      default: false
+      default: false,
     },
     start: {
       type: Boolean,
-      default: false
+      default: false,
     },
     room: {
       type: Object,
       default() {
         return {
-          players: []
+          players: [],
         };
-      }
+      },
     },
     socketId: {
       type: String,
-      default: ""
+      default: "",
     },
     currentPlayerId: {
       type: String,
-      default: ""
-    }
+      default: "",
+    },
   },
   data() {
     return {
@@ -129,33 +154,36 @@ export default {
       turn: null,
       top: {
         count: 0,
-        id: ""
+        id: "",
       },
       left: {
         count: 0,
-        id: ""
+        id: "",
       },
       right: {
         count: 0,
-        id: ""
+        id: "",
       },
       pile: [],
       cards: [],
       started: false,
-      playDirectionReverse: false
-    }
+      playDirectionReverse: false,
+      pickColor: false,
+      wildcardColor: null,
+      wildcardTemp: null,
+    };
   },
   computed: {
     playableCardsCount() {
-      return this.cards.filter(card => card.playable).length;
+      return this.cards.filter((card) => card.playable).length;
     },
     canDraw() {
-      if (this.turn === "you" && this.playableCardsCount > 0) {
-        return false
+      if (this.turn === "you" && this.playableCardsCount === 0) {
+        return true;
       } else {
-        return true
+        return false;
       }
-    }
+    },
   },
   watch: {
     pile() {
@@ -167,7 +195,7 @@ export default {
       }
     },
     room() {
-      this.setPlayers()
+      this.setPlayers();
     },
     currentPlayerId(val) {
       this.turn = this.getPosFromId(val);
@@ -176,7 +204,12 @@ export default {
       if (this.turn === "you") {
         this.findPlayable();
       }
-    }
+    },
+    wildcardColor() {
+      this.pickColor = false;
+      this.wildcardTemp.card.number = this.wildcardColor;
+      this.cardClicked(this.wildcardTemp, true);
+    },
   },
   methods: {
     getPosFromId(id) {
@@ -187,7 +220,7 @@ export default {
           return "right";
         case this.top.id:
           return "top";
-        default: 
+        default:
           return "you";
       }
     },
@@ -195,9 +228,9 @@ export default {
       const pos = this.getPosFromId(id);
       card.pos = pos;
 
-      if (pos === "you") return ;
+      if (pos === "you") return;
 
-      const ref = pos  + this[pos].count;
+      const ref = pos + this[pos].count;
       this.$refs[ref][0].clicked({ target: this.$refs[ref][0].$el }, card);
     },
     getNextPlayer() {
@@ -205,11 +238,11 @@ export default {
     },
     nextPlayer(player) {
       // switch to next player based on play direction
-      this.$emit("current-player", player ? this.top.id : this.getNextPlayer());
+      this.$emit("current-player", this[player].id);
     },
     setPlayers() {
       if (this.room.players.length !== 4) return;
-      const binds = [ "right", "top", "left" ]
+      const binds = ["right", "top", "left"];
       const me = this.room.players.indexOf(this.socketId);
       let i = me + 1;
       let count = 0;
@@ -230,12 +263,22 @@ export default {
       }
     },
     sortCards() {
-      const red = this.cards.filter(card => card.color === "red").sort((a, b) => a.number - b.number);
-      const green = this.cards.filter(card => card.color === "green").sort((a, b) => a.number - b.number);
-      const yellow = this.cards.filter(card => card.color === "yellow").sort((a, b) => a.number - b.number);
-      const blue = this.cards.filter(card => card.color === "blue").sort((a, b) => a.number - b.number);
-      const changeColor = this.cards.filter(card => card.color === "changeColor");
-      const plus4 = this.cards.filter(card => card.color === "plus4");
+      const red = this.cards
+        .filter((card) => card.color === "red")
+        .sort((a, b) => a.number - b.number);
+      const green = this.cards
+        .filter((card) => card.color === "green")
+        .sort((a, b) => a.number - b.number);
+      const yellow = this.cards
+        .filter((card) => card.color === "yellow")
+        .sort((a, b) => a.number - b.number);
+      const blue = this.cards
+        .filter((card) => card.color === "blue")
+        .sort((a, b) => a.number - b.number);
+      const changeColor = this.cards.filter(
+        (card) => card.color === "changeColor"
+      );
+      const plus4 = this.cards.filter((card) => card.color === "plus4");
 
       this.cards = [
         ...red,
@@ -243,20 +286,20 @@ export default {
         ...yellow,
         ...blue,
         ...changeColor,
-        ...plus4
+        ...plus4,
       ];
     },
     async giveCards(num, person = "you", anims = true) {
       for (let i = 0; i < num; i++) {
-        this.addCard(person, anims); 
+        this.addCard(person, anims);
         if (anims) await this.sleep(500);
       }
-      
+
       person === "you" ? this.sortCards() : null;
       return;
     },
     sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
+      return new Promise((resolve) => setTimeout(resolve, ms));
     },
     async startGame() {
       this.cards = [];
@@ -276,82 +319,142 @@ export default {
       const topCard = this.pile[this.pile.length - 1];
 
       if (!topCard) {
-        this.cards.forEach(card => card.playable = true);
+        this.cards.forEach((card) => (card.playable = true));
 
         this.cards.forEach((cardOld, i) => {
-          const card = {...cardOld};
+          const card = { ...cardOld };
 
           card.playable = true;
           card.id = uniqid.time();
 
           this.cards.splice(i, 1, card);
-        })
+        });
         return;
       }
 
       this.cards.forEach((card, i) => {
         card.playable = false;
 
+        /*
+         *   Checks for when topCard is a wildcard - card number relates to a color in spritesheet
+         */
+        if (topCard.color === "plus4" || topCard.color === "changeColor") {
+          if (topCard.number === 2 && card.color === "yellow") {
+            return indexes.push(i);
+          } else if (topCard.number === 3 && card.color === "red") {
+            return indexes.push(i);
+          } else if (topCard.number === 4 && card.color === "blue") {
+            return indexes.push(i);
+          } else if (topCard.number === 5 && card.color === "green") {
+            return indexes.push(i);
+          }
+        }
+
         if (card.color === "plus4" || card.color === "changeColor") {
           return indexes.push(i);
         } else if (card.color === topCard.color) {
           return indexes.push(i);
-        } else if (card.number === topCard.number) {
+        } else if (
+          card.number === topCard.number &&
+          topCard.color !== "plus4" &&
+          topCard.color !== "changeColor"
+        ) {
           return indexes.push(i);
         } else {
           return;
         }
-      })
+      });
 
-      indexes.forEach(i => {
-        const card = {...this.cards[i]};
+      indexes.forEach((i) => {
+        const card = { ...this.cards[i] };
 
         card.playable = true;
         card.id = uniqid.time();
 
         this.cards.splice(i, 1, card);
-      })
+      });
     },
-    cardClicked(e) {
+    cardClicked(e, skip = false) {
       // console.log({...e});
       // console.log(e);
       // console.log(e.other);
 
       if (!e.card.other) {
+        if (
+          (e.card.color === "plus4" || e.card.color === "changeColor") &&
+          !skip
+        ) {
+          this.pickColor = true;
+          this.wildcardTemp = e;
+          return;
+        }
+
         this.cards.splice(e.index, 1);
         this.cards = [...this.cards];
 
         e.card.id = uniqid.time();
         this.pile.push(e.card);
 
-        this.$emit("play-card", {
+        let playCardRes = {
           id: this.socketId,
-          nextPlayer: this.getNextPlayer(),
+          nextPlayer: this.left.id,
           card: {
             color: e.card.color,
-            number: e.card.number
-          }
-        })
+            number: e.card.number,
+          },
+        };
 
         if (e.card.number === 12) {
           // skip next player if a skip card is played
+          playCardRes.nextPlayer = this.top.id;
           this.nextPlayer("top");
+          this.$emit("play-card", playCardRes);
+        } else if (e.card.number === 13) {
+          // if play direction is reversed play opposite as direction will be reversed
+          // once message is sent and recieved from server
+          if (this.playDirectionReverse) {
+            playCardRes.nextPlayer = this.right.id;
+            this.nextPlayer("right");
+            this.$emit("play-card", playCardRes);
+          } else {
+            playCardRes.nextPlayer = this.left.id;
+            this.nextPlayer("left");
+            this.$emit("play-card", playCardRes);
+          }
         } else {
-          this.nextPlayer();
+          if (this.playDirectionReverse) {
+            // if card is a +4 or +2 then act as skip card
+            if (e.card.color === "plus4" || e.card.number === 11) {
+              this.nextPlayer("top");
+            } else {
+              this.nextPlayer("left");
+            }
+            playCardRes.nextPlayer = this.left.id;
+            this.$emit("play-card", playCardRes);
+          } else {
+            // if card is a +4 or +2 then act as skip card
+            if (e.card.color === "plus4" || e.card.number === 11) {
+              this.nextPlayer("top");
+            } else {
+              this.nextPlayer("right");
+            }
+            playCardRes.nextPlayer = this.right.id;
+            this.$emit("play-card", playCardRes);
+          }
         }
       } else {
         const card = {
           ...e.card.other,
           offsetX: e.card.offsetX,
           offsetY: e.card.offsetY,
-          rotate: e.card.rotate
+          rotate: e.card.rotate,
         };
 
         this[card.pos].count--;
         this[card.pos] = { ...this[card.pos] };
 
         card.id = uniqid.time();
-        
+
         this.pile.push(card);
       }
 
@@ -359,13 +462,13 @@ export default {
         this.pile.unshift();
       }
     },
-    addCard(person = "you", anims) {
+    addCard(person = "you", anims = true) {
       let card;
 
       if (person === "you") {
-        let colors = ["red", "green", "yellow", "blue" ];
+        let colors = ["red", "green", "yellow", "blue"];
         let color = colors[Math.floor(Math.random() * 4)];
-        
+
         let number = Math.floor(Math.random() * 13) + 1;
         if (number === 10) number = 0;
 
@@ -379,8 +482,8 @@ export default {
           color,
           number,
           id: uniqid.time(),
-          hidden: anims
-        }
+          hidden: anims,
+        };
 
         this.cards.push(card);
       } else {
@@ -396,34 +499,48 @@ export default {
           length = person === "right" ? 1 : this[person].count;
         }
 
-        const element = document.querySelector(`.cards.${person} .card:nth-of-type(${length})`);
-        
+        const element = document.querySelector(
+          `.cards.${person} .card:nth-of-type(${length})`
+        );
+
         if (element) {
           const { x, y } = this.$refs.topCard.$el.getBoundingClientRect();
           const { x: desX, y: desY } = element.getBoundingClientRect();
 
           if (person === "left") {
-            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${(y - desY) * -1}px) rotateX(-25deg) rotateY(52deg) scale(.66) !important`;
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
+              (y - desY) * -1
+            }px) rotateX(-25deg) rotateY(52deg) scale(.66) !important`;
           } else if (person === "right") {
-            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${(y - desY) * -1}px) rotateX(25deg) rotateY(52deg) scale(.66) !important`;
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
+              (y - desY) * -1
+            }px) rotateX(25deg) rotateY(52deg) scale(.66) !important`;
           } else if (person === "top") {
-            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${(y - desY) * -1}px) rotateX(-30deg) scale(.65) !important`;
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
+              (y - desY) * -1
+            }px) rotateX(-30deg) scale(.65) !important`;
           } else {
             let rotate = element.style.transform.match(/[rotate](.*)/)[0];
             rotate = rotate.slice(7, rotate.length - 1);
 
-            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${(y - desY) * -1}px) rotate(${rotate}) rotateY(180deg) !important`;
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
+              (y - desY) * -1
+            }px) rotate(${rotate}) rotateY(180deg) !important`;
           }
 
           this.$refs.topCard.$el.style.zIndex = 1000;
 
           setTimeout(() => {
             if (person === "you") {
-              this.cards.splice(this.cards.length - 1, 1, { ...card, hidden: false }); 
+              this.cards.splice(this.cards.length - 1, 1, {
+                ...card,
+                hidden: false,
+              });
             }
 
             this.topCardTransform = null;
-          }, 450)
+            this.findPlayable();
+          }, 450);
 
           me.disconnect(); // stop observing
           return;
@@ -432,21 +549,21 @@ export default {
 
       observer.observe(document, {
         childList: true,
-        subtree: true
-      })
-    } 
+        subtree: true,
+      });
+    },
   },
   mounted() {
     this.setPlayers();
-  }
-}
+  },
+};
 </script>
 
 <style lang="scss">
 .game {
   width: 100%;
   height: 100%;
-  background-color: #780E09;
+  background-color: #780e09;
   position: relative;
   display: flex;
   align-items: center;
@@ -454,15 +571,59 @@ export default {
   overflow: hidden;
 }
 
+.color-picker {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  position: absolute;
+  z-index: 1000;
+  display: flex;
+
+  .container {
+    width: 60%;
+    height: 60%;
+    background-color: white;
+    border-radius: 20px;
+    margin: auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-gap: 15px;
+
+    button {
+      border-radius: 10px;
+      width: 100%;
+      height: 100%;
+    }
+
+    .red {
+      background-color: #ff171a;
+    }
+
+    .green {
+      background-color: #5db151;
+    }
+
+    .yellow {
+      background-color: #ffde17;
+    }
+
+    .blue {
+      background-color: #1388d7;
+    }
+  }
+}
+
 .direction {
   display: inline-block;
-  position:absolute;
-  vertical-align:middle;
+  position: absolute;
+  vertical-align: middle;
   width: 350px;
   height: 350px;
   border: 14px solid transparent;
-  border-top-color:#ffffff50;
-  border-bottom-color:#ffffff50;
+  border-top-color: #ffffff50;
+  border-bottom-color: #ffffff50;
   border-radius: 50%;
   animation: rotate 8s linear infinite;
   transform: scale(1.2) rotateX(55deg);
@@ -484,12 +645,14 @@ export default {
     }
   }
 
-  &::after, &::before {
-    position:absolute;
+  &::after,
+  &::before {
+    position: absolute;
     content: "";
-    width:0; height:0;
+    width: 0;
+    height: 0;
     border: 20px solid transparent;
-    border-bottom-color:#ffffff50;
+    border-bottom-color: #ffffff50;
   }
 
   &::after {
@@ -505,7 +668,9 @@ export default {
   }
 
   @keyframes rotate {
-    to { transform: scale(1.2) rotateX(55deg) rotate(360deg); }
+    to {
+      transform: scale(1.2) rotateX(55deg) rotate(360deg);
+    }
   }
 }
 
@@ -517,7 +682,7 @@ export default {
 
   .card {
     pointer-events: none;
-    transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) scale(.85) !important;
+    transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) scale(0.85) !important;
     cursor: pointer;
 
     &.draw {
@@ -537,7 +702,7 @@ export default {
         }
       }
     }
-    
+
     &:not(:first-of-type) {
       margin-left: 0;
       position: absolute;
@@ -545,27 +710,33 @@ export default {
     }
 
     &:nth-of-type(6) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-2px, 2px) scale(.85) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
+        translate(-2px, 2px) scale(0.85) !important;
     }
 
     &:nth-of-type(5) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-4px, 4px) scale(.85) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
+        translate(-4px, 4px) scale(0.85) !important;
     }
 
     &:nth-of-type(4) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-6px, 6px) scale(.85) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
+        translate(-6px, 6px) scale(0.85) !important;
     }
 
     &:nth-of-type(3) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-8px, 8px) scale(.85) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
+        translate(-8px, 8px) scale(0.85) !important;
     }
 
     &:nth-of-type(2) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-10px, 10px) scale(.85) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
+        translate(-10px, 10px) scale(0.85) !important;
     }
 
     &:nth-of-type(1) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) translate(-12px, 12px) scale(.85) !important;
+      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
+        translate(-12px, 12px) scale(0.85) !important;
     }
   }
 }
@@ -589,7 +760,7 @@ export default {
 
 .you {
   .card {
-    filter: brightness(.7);
+    filter: brightness(0.7);
   }
 }
 
@@ -605,7 +776,7 @@ export default {
     bottom: 47.6%;
 
     .card {
-      transform: rotateX(25deg) rotateY(52deg) scale(.66);
+      transform: rotateX(25deg) rotateY(52deg) scale(0.66);
 
       &:not(:first-of-type) {
         margin-left: -95px;
@@ -618,7 +789,7 @@ export default {
     top: 21.9%;
 
     .card {
-      transform: rotateX(-25deg) rotateY(52deg) scale(.66);
+      transform: rotateX(-25deg) rotateY(52deg) scale(0.66);
 
       &:not(:first-of-type) {
         margin-left: -95px;
@@ -631,8 +802,8 @@ export default {
     margin-left: -30px;
 
     .card {
-      transform: rotateX(-30deg) scale(.65);
-      
+      transform: rotateX(-30deg) scale(0.65);
+
       &:not(:first-of-type) {
         margin-left: -95px;
       }

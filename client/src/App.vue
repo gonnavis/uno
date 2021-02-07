@@ -1,15 +1,28 @@
 <template>
   <div id="app">
-    <router-view ref="router" @current-player="currentPlayer" @play-card="playCard" :currentPlayerId="currentPlayerId" :start="start" :socketId="socketId" :room="room" @start-game="startGame" @join-room="joinRoom" @create-room="createRoom" :response="response" :host="host" />
+    <router-view
+      ref="router"
+      @current-player="currentPlayer"
+      @play-card="playCard"
+      :currentPlayerId="currentPlayerId"
+      :start="start"
+      :socketId="socketId"
+      :room="room"
+      @start-game="startGame"
+      @join-room="joinRoom"
+      @create-room="createRoom"
+      :response="response"
+      :host="host"
+    />
   </div>
 </template>
 
 <script>
 import io from "socket.io-client";
-const socket = io("http://localhost:3000")
+const socket = io("http://localhost:3000");
 
 export default {
-  name: 'App',
+  name: "App",
   data() {
     return {
       roomId: "",
@@ -18,13 +31,13 @@ export default {
       currentPlayerId: "",
       response: {
         error: null,
-        message: null
+        message: null,
       },
       room: {
-        players: []
+        players: [],
       },
-      socketId: ""
-    }
+      socketId: "",
+    };
   },
   methods: {
     joinRoom(code) {
@@ -42,58 +55,68 @@ export default {
       socket.emit("current-player", id);
     },
     playCard(data) {
-      socket.emit("play-card", data)
+      socket.emit("play-card", data);
 
       const { card } = data;
 
       if (card.number === 11) {
-        socket.emit("give-cards", { id: data.nextPlayer, amount: 2 });
+        socket.emit("plus-card-played", { id: data.nextPlayer, amount: 2 });
+      } else if (card.color === "plus4") {
+        socket.emit("plus-card-played", { id: data.nextPlayer, amount: 4 });
       } else if (card.number === 13) {
-        socket.emit("reverse-play-direction");
+        socket.emit("reverse-card-played");
       }
-    }
+    },
   },
   mounted() {
-    socket.on("connect", () => this.socketId = socket.id);
+    socket.on("connect", () => (this.socketId = socket.id));
 
-    socket.on("created-room", id => {
+    socket.on("created-room", (id) => {
       this.roomId = id;
       this.host = true;
 
-      this.$router.push({ name: "Game", query: { roomCode: this.roomId } })
-    })
+      this.$router.push({ name: "Game", query: { roomCode: this.roomId } });
+    });
 
-    socket.on("join-room-response", res => {
+    socket.on("join-room-response", (res) => {
       this.response = res;
 
       if (!this.response.error) {
-        this.$router.push({ name: "Game", query: { roomCode: this.room.id } })
+        this.$router.push({ name: "Game", query: { roomCode: this.room.id } });
       }
-    })
+    });
 
     socket.on("start-the-game", () => {
       this.start = true;
-    })
+    });
 
-    socket.on("room-data", data => {
+    socket.on("room-data", (data) => {
       this.room = data;
-    })
+    });
 
-    socket.on("current-player-update", id => {
+    socket.on("current-player-update", (id) => {
       this.currentPlayerId = id;
-    })
+    });
 
-    socket.on("played-card", data => {
+    socket.on("played-card", (data) => {
       this.$refs.router.otherPlayedCard(data.id, data.card);
-    })
+    });
 
-    socket.on("receive-cards", data => {
+    socket.on("receive-cards", (data) => {
       this.$refs.router.giveCards(data);
-    })
+    });
 
-    socket.on("play-direction-reversed", () => {
-      this.$refs.router.playDirectionReverse = !this.$refs.router.playDirectionReverse;
-    })
+    socket.on("reverse-play-direction", () => {
+      this.$refs.router.playDirectionReverse = !this.$refs.router
+        .playDirectionReverse;
+    });
+
+    socket.on("give-cards", (data) => {
+      this.$refs.router.giveCards(
+        data.amount,
+        this.$refs.router.getPosFromId(data.id)
+      );
+    });
 
     const roomCode = this.$route.query.roomCode;
 
@@ -101,8 +124,8 @@ export default {
       this.$router.push({ name: "Home", query: { roomCode: roomCode } });
       socket.emit("join-room", roomCode);
     }
-  }
-}
+  },
+};
 </script>
 
 <style lang="scss">
@@ -114,7 +137,7 @@ body {
 #app {
   width: 100%;
   height: 100%;
-  background-color: #780E09;
+  background-color: #780e09;
   position: relative;
   display: flex;
   align-items: center;
