@@ -19,7 +19,11 @@
 
 <script>
 import io from "socket.io-client";
-const socket = io("http://localhost:3000");
+const socket = io(
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://uno-freddie.herokuapp.com/"
+);
 
 export default {
   name: "App",
