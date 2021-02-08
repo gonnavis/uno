@@ -1,118 +1,3 @@
-<template>
-  <div class="game">
-    <div v-if="pickColor" class="color-picker">
-      <div class="container">
-        <button @click="wildcardColor = 3" class="red"></button>
-        <button @click="wildcardColor = 5" class="green"></button>
-        <button @click="wildcardColor = 2" class="yellow"></button>
-        <button @click="wildcardColor = 4" class="blue"></button>
-      </div>
-    </div>
-    <div class="pile">
-      <Card
-        v-for="card in pile"
-        :key="card.id"
-        :color="card.color"
-        :number="card.number"
-        :offsetX="card.offsetX"
-        :offsetY="card.offsetY"
-        :pileRotate="card.rotate"
-        :pile="true"
-      />
-    </div>
-    <div class="direction" :class="{ reverse: !playDirectionReverse }"></div>
-    <div class="cards you">
-      <Card
-        v-for="(card, i) in cards"
-        :key="card.id"
-        :color="card.color"
-        :number="card.number"
-        :style="{ zIndex: i }"
-        :length="cards.length"
-        :index="i"
-        :hidden="card.hidden || false"
-        :playable="(card.playable && turn === 'you') || false"
-        @clicked="cardClicked"
-      />
-    </div>
-    <div class="cards other right">
-      <Card
-        v-for="i in right.count"
-        :ref="'right' + i"
-        :key="i"
-        :color="'plus4'"
-        :number="6"
-        :style="{ zIndex: i }"
-        :length="8"
-        :index="i"
-        @clicked="cardClicked"
-        :other="true"
-      />
-    </div>
-    <div class="cards other left">
-      <Card
-        v-for="i in left.count"
-        :key="i"
-        :ref="'left' + i"
-        :color="'plus4'"
-        :number="6"
-        :style="{ zIndex: i }"
-        :length="8"
-        :index="i"
-        @clicked="cardClicked"
-        :other="true"
-        :left="true"
-      />
-    </div>
-
-    <div class="cards other top">
-      <Card
-        v-for="i in top.count"
-        :ref="'top' + i"
-        :key="i"
-        :color="'plus4'"
-        :number="6"
-        :style="{ zIndex: i }"
-        :length="8"
-        :index="i"
-        @clicked="cardClicked"
-        :other="true"
-        :top="true"
-      />
-    </div>
-    <div class="stack" @click="canDraw ? addCard() : null">
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card
-        :color="'plus4'"
-        :number="6"
-        ref="topCard"
-        :forceTransform="topCardTransform"
-        style=""
-        :noTransition="!topCardTransform ? true : false"
-      />
-    </div>
-    <button
-      @click="$emit('start-game')"
-      style="
-        position: absolute;
-        top: 0;
-        right: 0;
-        background: white;
-        font-size: 1.2em;
-        padding: 8px;
-      "
-    >
-      start game
-    </button>
-  </div>
-</template>
-
 <script>
 import Card from "../components/Card.vue";
 import uniqid from "uniqid";
@@ -171,6 +56,7 @@ export default {
       pickColor: false,
       wildcardColor: null,
       wildcardTemp: null,
+      drawing: false,
     };
   },
   computed: {
@@ -492,6 +378,8 @@ export default {
 
       if (!anims) return;
 
+      if (person === "you") this.drawing = true;
+
       const observer = new MutationObserver((mutations, me) => {
         let length = this.cards.length;
 
@@ -540,6 +428,7 @@ export default {
 
             this.topCardTransform = null;
             this.findPlayable();
+            this.drawing = false; // allow player to draw another card once animation is played
           }, 450);
 
           me.disconnect(); // stop observing
@@ -558,6 +447,121 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div class="game">
+    <div v-if="pickColor" class="color-picker">
+      <div class="container">
+        <button @click="wildcardColor = 3" class="red"></button>
+        <button @click="wildcardColor = 5" class="green"></button>
+        <button @click="wildcardColor = 2" class="yellow"></button>
+        <button @click="wildcardColor = 4" class="blue"></button>
+      </div>
+    </div>
+    <div class="pile">
+      <Card
+        v-for="card in pile"
+        :key="card.id"
+        :color="card.color"
+        :number="card.number"
+        :offsetX="card.offsetX"
+        :offsetY="card.offsetY"
+        :pileRotate="card.rotate"
+        :pile="true"
+      />
+    </div>
+    <div class="direction" :class="{ reverse: !playDirectionReverse }"></div>
+    <div class="cards you">
+      <Card
+        v-for="(card, i) in cards"
+        :key="card.id"
+        :color="card.color"
+        :number="card.number"
+        :style="{ zIndex: i }"
+        :length="cards.length"
+        :index="i"
+        :hidden="card.hidden || false"
+        :playable="(card.playable && turn === 'you') || false"
+        @clicked="cardClicked"
+      />
+    </div>
+    <div class="cards other right">
+      <Card
+        v-for="i in right.count"
+        :ref="'right' + i"
+        :key="i"
+        :color="'plus4'"
+        :number="6"
+        :style="{ zIndex: i }"
+        :length="8"
+        :index="i"
+        @clicked="cardClicked"
+        :other="true"
+      />
+    </div>
+    <div class="cards other left">
+      <Card
+        v-for="i in left.count"
+        :key="i"
+        :ref="'left' + i"
+        :color="'plus4'"
+        :number="6"
+        :style="{ zIndex: i }"
+        :length="8"
+        :index="i"
+        @clicked="cardClicked"
+        :other="true"
+        :left="true"
+      />
+    </div>
+
+    <div class="cards other top">
+      <Card
+        v-for="i in top.count"
+        :ref="'top' + i"
+        :key="i"
+        :color="'plus4'"
+        :number="6"
+        :style="{ zIndex: i }"
+        :length="8"
+        :index="i"
+        @clicked="cardClicked"
+        :other="true"
+        :top="true"
+      />
+    </div>
+    <div class="stack" @click="canDraw && !drawing ? addCard() : null">
+      <Card :color="'plus4'" :number="6" />
+      <Card :color="'plus4'" :number="6" />
+      <Card :color="'plus4'" :number="6" />
+      <Card :color="'plus4'" :number="6" />
+      <Card :color="'plus4'" :number="6" />
+      <Card :color="'plus4'" :number="6" />
+      <Card :color="'plus4'" :number="6" :class="{ draw: canDraw }" />
+      <Card
+        :color="'plus4'"
+        :number="6"
+        ref="topCard"
+        :forceTransform="topCardTransform"
+        style=""
+        :noTransition="!topCardTransform ? true : false"
+      />
+    </div>
+    <button
+      @click="$emit('start-game')"
+      style="
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: white;
+        font-size: 1.2em;
+        padding: 8px;
+      "
+    >
+      start game
+    </button>
+  </div>
+</template>
 
 <style lang="scss">
 .game {
@@ -679,6 +683,10 @@ export default {
   left: 60px;
   bottom: 290px;
   cursor: pointer;
+
+  &.canDraw {
+    box-shadow: 0px 0px 14px 14px #ffe23f, inset 0px 0px 3px 3px #ffe448;
+  }
 
   .card {
     pointer-events: none;
