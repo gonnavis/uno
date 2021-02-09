@@ -70,6 +70,9 @@ export default {
         return false;
       }
     },
+    canStartGame() {
+      return this.room.host === this.socketId && this.room.players.length === 4;
+    },
   },
   watch: {
     pile() {
@@ -548,6 +551,7 @@ export default {
       />
     </div>
     <button
+      v-if="canStartGame"
       @click="$emit('start-game')"
       style="
         position: absolute;
