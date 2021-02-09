@@ -10,7 +10,7 @@ io.on("connection", (socket) => {
   console.log("connection");
 
   socket.on("disconnect", () => {
-    console.log("disconnection");
+    io.to(socket.roomId).emit("player-disconnect", socket.id);
   });
 
   socket.on("create-room", () => {

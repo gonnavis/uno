@@ -71,7 +71,14 @@ export default {
       }
     },
     canStartGame() {
-      return this.room.host === this.socketId && this.room.players.length === 4;
+      return (
+        this.room.host === this.socketId &&
+        this.room.players.length === 4 &&
+        !this.started
+      );
+    },
+    playerCount() {
+      return this.room.players.length;
     },
   },
   watch: {
@@ -474,20 +481,6 @@ export default {
       />
     </div>
     <div class="direction" :class="{ reverse: !playDirectionReverse }"></div>
-    <div class="cards you">
-      <Card
-        v-for="(card, i) in cards"
-        :key="card.id"
-        :color="card.color"
-        :number="card.number"
-        :style="{ zIndex: i }"
-        :length="cards.length"
-        :index="i"
-        :hidden="card.hidden || false"
-        :playable="(card.playable && turn === 'you') || false"
-        @clicked="cardClicked"
-      />
-    </div>
     <div class="cards other right">
       <Card
         v-for="i in right.count"
@@ -517,7 +510,6 @@ export default {
         :left="true"
       />
     </div>
-
     <div class="cards other top">
       <Card
         v-for="i in top.count"
@@ -533,37 +525,52 @@ export default {
         :top="true"
       />
     </div>
-    <div class="stack" @click="canDraw && !drawing ? addCard() : null">
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" />
-      <Card :color="'plus4'" :number="6" :class="{ draw: canDraw }" />
-      <Card
-        :color="'plus4'"
-        :number="6"
-        ref="topCard"
-        :forceTransform="topCardTransform"
-        style=""
-        :noTransition="!topCardTransform ? true : false"
-      />
+
+    <div class="hud">
+      <div class="cards you">
+        <Card
+          v-for="(card, i) in cards"
+          :key="card.id"
+          :color="card.color"
+          :number="card.number"
+          :style="{ zIndex: i }"
+          :length="cards.length"
+          :index="i"
+          :hidden="card.hidden || false"
+          :playable="(card.playable && turn === 'you') || false"
+          @clicked="cardClicked"
+        />
+      </div>
+      <div class="stack" @click="canDraw && !drawing ? addCard() : null">
+        <Card :color="'plus4'" :number="6" />
+        <Card :color="'plus4'" :number="6" />
+        <Card :color="'plus4'" :number="6" />
+        <Card :color="'plus4'" :number="6" />
+        <Card :color="'plus4'" :number="6" />
+        <Card :color="'plus4'" :number="6" />
+        <Card :color="'plus4'" :number="6" :class="{ draw: canDraw }" />
+        <Card
+          :color="'plus4'"
+          :number="6"
+          ref="topCard"
+          :forceTransform="topCardTransform"
+          style=""
+          :noTransition="!topCardTransform ? true : false"
+        />
+      </div>
+      <button
+        v-if="canStartGame"
+        class="start-btn"
+        @click="$emit('start-game')"
+      >
+        Start Game
+      </button>
+      <div class="top-left-text">
+        <p class="players">
+          Players: {{ playerCount === 0 ? 1 : playerCount }} / 4
+        </p>
+      </div>
     </div>
-    <button
-      v-if="canStartGame"
-      @click="$emit('start-game')"
-      style="
-        position: absolute;
-        top: 0;
-        right: 0;
-        background: white;
-        font-size: 1.2em;
-        padding: 8px;
-      "
-    >
-      start game
-    </button>
   </div>
 </template>
 
@@ -577,6 +584,38 @@ export default {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+.hud {
+  margin-top: auto;
+
+  .start-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 14px 22px;
+    background-color: #ff520d;
+    color: #fff;
+    border: 2px solid white;
+    border-radius: 6px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    outline: none;
+
+    &:hover {
+      background-color: #ff8e0d;
+    }
+  }
+
+  .top-left-text {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
 }
 
 .color-picker {

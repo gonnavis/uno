@@ -75,6 +75,12 @@ export default {
   mounted() {
     socket.on("connect", () => (this.socketId = socket.id));
 
+    socket.on("player-disconnect", (id) => {
+      const room = { ...this.room };
+      room.players = room.players.filter((playerId) => playerId !== id);
+      this.room = room;
+    });
+
     socket.on("created-room", (id) => {
       this.roomId = id;
       this.host = true;
