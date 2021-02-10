@@ -21,6 +21,7 @@ export default {
       default() {
         return {
           players: [],
+          usernames: [],
         };
       },
     },
@@ -51,7 +52,6 @@ export default {
       },
       pile: [],
       cards: [],
-      started: false,
       playDirectionReverse: false,
       pickColor: false,
       wildcardColor: null,
@@ -74,7 +74,7 @@ export default {
       return (
         this.room.host === this.socketId &&
         this.room.players.length === 4 &&
-        !this.started
+        !this.start
       );
     },
     playerCount() {
@@ -108,6 +108,10 @@ export default {
     },
   },
   methods: {
+    getUsernameFromId(id) {
+      const index = this.room.players.findIndex((player) => player === id);
+      return this.room.usernames[index];
+    },
     getPosFromId(id) {
       switch (id) {
         case this.left.id:
@@ -196,6 +200,103 @@ export default {
     },
     sleep(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
+    },
+    addCard(person = "you", anims = true, tellServer) {
+      let card;
+
+      if (person === "you") {
+        let colors = ["red", "green", "yellow", "blue"];
+        let color = colors[Math.floor(Math.random() * 4)];
+
+        let number = Math.floor(Math.random() * 13) + 1;
+        if (number === 10) number = 0;
+
+        // special card chance
+        if (Math.random() < 0.1) {
+          color = ["plus4", "changeColor"][Math.floor(Math.random() * 2)];
+          number = 1;
+        }
+
+        card = {
+          color,
+          number,
+          id: uniqid.time(),
+          hidden: anims,
+        };
+
+        this.cards.push(card);
+
+        if (tellServer) {
+          this.$emit("draw-card", 1);
+        }
+      } else {
+        this[person].count++;
+      }
+
+      if (!anims) return;
+
+      if (person === "you") this.drawing = true;
+
+      const observer = new MutationObserver((mutations, me) => {
+        let length = this.cards.length;
+
+        if (person !== "you") {
+          length = person === "right" ? 1 : this[person].count;
+        }
+
+        const element = document.querySelector(
+          `.cards.${person} .card:nth-of-type(${length})`
+        );
+
+        if (element) {
+          const { x, y } = this.$refs.topCard.$el.getBoundingClientRect();
+          const { x: desX, y: desY } = element.getBoundingClientRect();
+
+          if (person === "left") {
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
+              (y - desY) * -1
+            }px) rotateX(-25deg) rotateY(52deg) scale(.66) !important`;
+          } else if (person === "right") {
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
+              (y - desY) * -1
+            }px) rotateX(25deg) rotateY(52deg) scale(.66) !important`;
+          } else if (person === "top") {
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
+              (y - desY) * -1
+            }px) rotateX(-30deg) scale(.65) !important`;
+          } else {
+            let rotate = element.style.transform.match(/[rotate](.*)/)[0];
+            rotate = rotate.slice(7, rotate.length - 1);
+
+            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
+              (y - desY) * -1
+            }px) rotate(${rotate}) rotateY(180deg) !important`;
+          }
+
+          this.$refs.topCard.$el.style.zIndex = 1000;
+
+          setTimeout(() => {
+            if (person === "you") {
+              this.cards.splice(this.cards.length - 1, 1, {
+                ...card,
+                hidden: false,
+              });
+            }
+
+            this.topCardTransform = null;
+            this.findPlayable();
+            this.drawing = false; // allow player to draw another card once animation is played
+          }, 450);
+
+          me.disconnect(); // stop observing
+          return;
+        }
+      });
+
+      observer.observe(document, {
+        childList: true,
+        subtree: true,
+      });
     },
     async startGame() {
       this.cards = [];
@@ -358,99 +459,6 @@ export default {
         this.pile.unshift();
       }
     },
-    addCard(person = "you", anims = true) {
-      let card;
-
-      if (person === "you") {
-        let colors = ["red", "green", "yellow", "blue"];
-        let color = colors[Math.floor(Math.random() * 4)];
-
-        let number = Math.floor(Math.random() * 13) + 1;
-        if (number === 10) number = 0;
-
-        // special card chance
-        if (Math.random() < 0.1) {
-          color = ["plus4", "changeColor"][Math.floor(Math.random() * 2)];
-          number = 1;
-        }
-
-        card = {
-          color,
-          number,
-          id: uniqid.time(),
-          hidden: anims,
-        };
-
-        this.cards.push(card);
-      } else {
-        this[person].count++;
-      }
-
-      if (!anims) return;
-
-      if (person === "you") this.drawing = true;
-
-      const observer = new MutationObserver((mutations, me) => {
-        let length = this.cards.length;
-
-        if (person !== "you") {
-          length = person === "right" ? 1 : this[person].count;
-        }
-
-        const element = document.querySelector(
-          `.cards.${person} .card:nth-of-type(${length})`
-        );
-
-        if (element) {
-          const { x, y } = this.$refs.topCard.$el.getBoundingClientRect();
-          const { x: desX, y: desY } = element.getBoundingClientRect();
-
-          if (person === "left") {
-            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
-              (y - desY) * -1
-            }px) rotateX(-25deg) rotateY(52deg) scale(.66) !important`;
-          } else if (person === "right") {
-            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
-              (y - desY) * -1
-            }px) rotateX(25deg) rotateY(52deg) scale(.66) !important`;
-          } else if (person === "top") {
-            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
-              (y - desY) * -1
-            }px) rotateX(-30deg) scale(.65) !important`;
-          } else {
-            let rotate = element.style.transform.match(/[rotate](.*)/)[0];
-            rotate = rotate.slice(7, rotate.length - 1);
-
-            this.topCardTransform = `translate(${(x - desX * 0.96) * -1}px, ${
-              (y - desY) * -1
-            }px) rotate(${rotate}) rotateY(180deg) !important`;
-          }
-
-          this.$refs.topCard.$el.style.zIndex = 1000;
-
-          setTimeout(() => {
-            if (person === "you") {
-              this.cards.splice(this.cards.length - 1, 1, {
-                ...card,
-                hidden: false,
-              });
-            }
-
-            this.topCardTransform = null;
-            this.findPlayable();
-            this.drawing = false; // allow player to draw another card once animation is played
-          }, 450);
-
-          me.disconnect(); // stop observing
-          return;
-        }
-      });
-
-      observer.observe(document, {
-        childList: true,
-        subtree: true,
-      });
-    },
   },
   mounted() {
     this.setPlayers();
@@ -541,7 +549,10 @@ export default {
           @clicked="cardClicked"
         />
       </div>
-      <div class="stack" @click="canDraw && !drawing ? addCard() : null">
+      <div
+        class="stack"
+        @click="canDraw && !drawing ? addCard('you', true, true) : null"
+      >
         <Card :color="'plus4'" :number="6" />
         <Card :color="'plus4'" :number="6" />
         <Card :color="'plus4'" :number="6" />
@@ -557,6 +568,34 @@ export default {
           style=""
           :noTransition="!topCardTransform ? true : false"
         />
+      </div>
+      <div
+        v-if="this.start"
+        class="player-card you"
+        :class="{ playing: this.turn === 'you' }"
+      >
+        {{ this.getUsernameFromId(this.socketId) }}
+      </div>
+      <div
+        v-if="this.right.id && this.start"
+        class="player-card right"
+        :class="{ playing: this.turn === 'right' }"
+      >
+        {{ this.getUsernameFromId(this.right.id) }}
+      </div>
+      <div
+        v-if="this.left.id && this.start"
+        class="player-card left"
+        :class="{ playing: this.turn === 'left' }"
+      >
+        {{ this.getUsernameFromId(this.left.id) }}
+      </div>
+      <div
+        v-if="this.top.id && this.start"
+        class="player-card top"
+        :class="{ playing: this.turn === 'top' }"
+      >
+        {{ this.getUsernameFromId(this.top.id) }}
       </div>
       <button
         v-if="canStartGame"
@@ -588,6 +627,7 @@ export default {
 
 .hud {
   margin-top: auto;
+  z-index: 400;
 
   .start-btn {
     position: absolute;
@@ -615,6 +655,45 @@ export default {
     color: white;
     font-weight: bold;
     font-size: 1.2rem;
+  }
+
+  .player-card {
+    padding: 12px 22px;
+    background-color: white;
+    border: 6px solid black;
+    border-radius: 8px;
+    position: absolute;
+    z-index: 100;
+    font-weight: bold;
+
+    &.playing {
+      box-shadow: 0px 0px 10px 9px #fcc81c;
+    }
+
+    &.right {
+      right: 120px;
+      top: 41%;
+    }
+
+    &.left {
+      left: 90px;
+      top: 41%;
+    }
+
+    &.top {
+      left: 44.5%;
+      top: 160px;
+    }
+
+    &.you {
+      left: 45%;
+      bottom: 15px;
+      filter: brightness(0.6);
+
+      &.playing {
+        filter: unset;
+      }
+    }
   }
 }
 

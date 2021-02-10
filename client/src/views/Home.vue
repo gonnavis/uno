@@ -2,71 +2,118 @@
   <div class="home">
     <h1><span>UNO</span></h1>
     <h2>By Freddie</h2>
-    
-    <form @submit.prevent="$emit('join-room', code)">
-      <label for="roomCode">Room Code</label>
-      <div>
-        <input v-model="code" type="text" name="roomCode" minlength="8" maxlength="8" required>
-        <button type="submit">Join</button>
+
+    <div class="container">
+      <label for="username">Username</label>
+      <div class="input username-input">
+        <input
+          v-model="username"
+          type="text"
+          name="username"
+          minlength="2"
+          maxlength="20"
+          style="width: 100%"
+        />
       </div>
-    </form>
 
-    <button class="create-btn" @click="$emit('create-room')">Create Room</button>
+      <form @submit.prevent="joinRoom">
+        <hr style="margin: 22px 0" />
+        <label for="roomCode">Room Code</label>
+        <div class="input">
+          <input
+            v-model="code"
+            type="text"
+            name="roomCode"
+            minlength="8"
+            maxlength="8"
+            required
+          />
+          <button type="submit">Join</button>
+        </div>
+      </form>
 
-    <div class="response" :class="{ error: response.error }" v-if="responseRecieved">
-      <p>{{ (this.response.error ? "Error" : "Success") + ": " + this.response.message }}</p>
+      <p style="padding: 8px">Or</p>
+      <button class="create-btn" @click="createRoom">Create Room</button>
+
+      <div
+        class="response"
+        :class="{ error: response.error }"
+        v-if="responseRecieved"
+      >
+        <p>
+          {{
+            (this.response.error ? "Error" : "Success") +
+            ": " +
+            this.response.message
+          }}
+        </p>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'Home',
+  name: "Home",
   props: {
     response: {
       type: Object,
       default() {
-        return {}
-      }
-    }
+        return {};
+      },
+    },
   },
   computed: {
     responseRecieved() {
       return !!this.response.message;
-    }
+    },
   },
   data() {
     return {
-      code: ""
-    }
-  }
-}
+      code: "",
+      username: "",
+    };
+  },
+  methods: {
+    createRoom() {
+      if (this.username.length < 2 || this.username.length > 20) return;
+
+      this.$emit("create-room", this.username);
+    },
+    joinRoom() {
+      if (this.username.length < 2 || this.username.length > 20) return;
+      if (this.code.length !== 8) return;
+
+      this.$emit("join-room", { code: this.code, username: this.username });
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
 @font-face {
-  font-family:'Rig Bold Coarse'; 
-  src:url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldCoarse.otf');
+  font-family: "Rig Bold Coarse";
+  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldCoarse.otf");
 }
 
 @font-face {
-  font-family:'Rig Bold Extrude'; 
-  src:url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldExtrude.otf');
+  font-family: "Rig Bold Extrude";
+  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldExtrude.otf");
 }
 
 @font-face {
-  font-family:'Rig Bold Shadow'; 
-  src:url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldShadow.otf');
+  font-family: "Rig Bold Shadow";
+  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldShadow.otf");
 }
 
 @font-face {
-  font-family:'Rig Bold Face'; 
-  src:url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldFace.otf');
+  font-family: "Rig Bold Face";
+  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldFace.otf");
 }
 
 @font-face {
-  font-family:'Rig Bold Inline'; 
-  src:url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldInline.otf');
+  font-family: "Rig Bold Inline";
+  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldInline.otf");
 }
 
 .home {
@@ -80,17 +127,17 @@ export default {
   color: white;
 
   .response {
-    width: max(30%, 350px);
+    width: 100%;
     height: 60px;
     display: flex;
     align-items: center;
     background-color: rgba(0, 255, 64, 0.459);
-    border: 2px solid rgb(0, 255, 64);  
+    border: 2px solid rgb(0, 255, 64);
     border-radius: 8px;
     color: rgb(0, 255, 64);
     font-weight: bold;
     font-size: 1.1em;
-    
+
     p {
       margin-left: 3%;
     }
@@ -103,25 +150,52 @@ export default {
   }
 
   .create-btn {
-    width: max(30%, 350px);
+    width: 100%;
     background-color: #ffd000;
     padding: 10px;
     border-radius: 8px;
     font-weight: bold;
     font-size: 1.4em;
-    transition: background-color .2s ease;
+    transition: background-color 0.2s ease;
     outline: none;
     margin-bottom: 10px;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       background-color: #ff7b00;
+    }
+  }
+
+  .container {
+    width: max(40%, 400px);
+    display: flex;
+    flex-direction: column;
+
+    p {
+      margin: auto;
+    }
+  }
+
+  .input {
+    padding: 6px;
+    border-radius: 8px;
+    color: black;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    background-color: white;
+
+    input {
+      width: 82%;
+      font-size: 1.3em;
+      padding: 4px;
+      outline: none;
     }
   }
 
   form {
     display: flex;
     flex-direction: column;
-    width: max(30%, 350px);
     margin-bottom: 5px;
 
     label {
@@ -130,32 +204,16 @@ export default {
       font-weight: 400;
     }
 
-    div {
-      padding: 6px;
-      border-radius: 8px;
-      color: black;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      background-color: white;
-    }
-
-    input {
-      width: 82%;
-      font-size: 1.3em;
-      padding: 4px;
-      outline: none;
-    }
-
     button {
       width: 18%;
-      background-color: #EE151F;
+      background-color: #ee151f;
       color: white;
       border-radius: 5px;
       outline: none;
-      transition: background-color .2s ease;
+      transition: background-color 0.2s ease;
 
-      &:hover, &:focus {
+      &:hover,
+      &:focus {
         background-color: #b9161e;
       }
     }
@@ -172,7 +230,7 @@ export default {
   $shadow2: transparent;
 
   h1 {
-    font-family: 'Rig Bold Face';
+    font-family: "Rig Bold Face";
     text-transform: uppercase;
     font-size: 12em;
     text-align: center;
@@ -190,7 +248,7 @@ export default {
       width: 120%;
       height: 110%;
       position: absolute;
-      background-color: #EE151F;
+      background-color: #ee151f;
       border-radius: 50%;
       z-index: -1;
       left: 50%;
@@ -201,12 +259,12 @@ export default {
 
   span {
     -webkit-text-stroke: 8px white;
-    
+
     &::after {
-      font-family: 'Rig Bold Extrude';
+      font-family: "Rig Bold Extrude";
       color: $shadow;
     }
-    
+
     &:after {
       content: "UNO";
       position: absolute;

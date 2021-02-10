@@ -11,6 +11,7 @@
       @start-game="startGame"
       @join-room="joinRoom"
       @create-room="createRoom"
+      @draw-card="drawCard"
       :response="response"
       :host="host"
     />
@@ -44,13 +45,13 @@ export default {
     };
   },
   methods: {
-    joinRoom(code) {
+    joinRoom(data) {
       if (this.roomId) return;
 
-      socket.emit("join-room", code);
+      socket.emit("join-room", data);
     },
-    createRoom() {
-      socket.emit("create-room");
+    createRoom(username) {
+      socket.emit("create-room", username);
     },
     startGame() {
       socket.emit("start-game");
@@ -70,6 +71,13 @@ export default {
       } else if (card.number === 13) {
         socket.emit("reverse-card-played");
       }
+    },
+    drawCard(amount) {
+      socket.emit("add-cards", {
+        amount,
+        id: this.socketId,
+        skipIfReceiver: true,
+      });
     },
   },
   mounted() {
@@ -122,6 +130,8 @@ export default {
     });
 
     socket.on("give-cards", (data) => {
+      if (data.id === this.socketId && data.skipIfReceiver) return;
+
       this.$refs.router.giveCards(
         data.amount,
         this.$refs.router.getPosFromId(data.id)

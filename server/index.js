@@ -13,7 +13,7 @@ io.on("connection", (socket) => {
     io.to(socket.roomId).emit("player-disconnect", socket.id);
   });
 
-  socket.on("create-room", () => {
+  socket.on("create-room", (username) => {
     const roomId = uniqid.time();
 
     socket.roomId = roomId;
@@ -22,13 +22,14 @@ io.on("connection", (socket) => {
     rooms[roomId] = {
       host: socket.id,
       players: [socket.id],
+      usernames: [username],
     };
 
     socket.join(roomId);
     socket.emit("created-room", roomId);
   });
 
-  socket.on("join-room", (code) => {
+  socket.on("join-room", ({ code, username }) => {
     const exists = io.sockets.adapter.rooms[code];
 
     if (exists) {
@@ -37,6 +38,8 @@ io.on("connection", (socket) => {
         return socket.emit("join-room-response", { error: true, message: "Room is already full." });
 
       rooms[code].players.push(socket.id);
+      rooms[code].usernames.push(username);
+
       socket.join(code);
       socket.roomId = code;
       io.to(socket.roomId).emit("room-data", rooms[code]);
@@ -64,6 +67,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("plus-card-played", (data) => {
+    io.to(socket.roomId).emit("give-cards", data);
+  });
+
+  socket.on("add-cards", (data) => {
     io.to(socket.roomId).emit("give-cards", data);
   });
 });
