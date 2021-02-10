@@ -20,13 +20,14 @@ io.on("connection", (socket) => {
     socket.roomHost = true;
 
     rooms[roomId] = {
+      id: roomId,
       host: socket.id,
       players: [socket.id],
       usernames: [username],
     };
 
     socket.join(roomId);
-    socket.emit("created-room", roomId);
+    socket.emit("created-room", rooms[roomId]);
   });
 
   socket.on("join-room", ({ code, username }) => {

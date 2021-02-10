@@ -39,6 +39,7 @@ export default {
         message: null,
       },
       room: {
+        id: "",
         players: [],
       },
       socketId: "",
@@ -89,18 +90,18 @@ export default {
       this.room = room;
     });
 
-    socket.on("created-room", (id) => {
-      this.roomId = id;
+    socket.on("created-room", (room) => {
+      this.room = room;
       this.host = true;
 
-      this.$router.push({ name: "Game", query: { roomCode: this.roomId } });
+      this.$router.push({ name: "Game" });
     });
 
     socket.on("join-room-response", (res) => {
       this.response = res;
 
       if (!this.response.error) {
-        this.$router.push({ name: "Game", query: { roomCode: this.room.id } });
+        this.$router.push({ name: "Game" });
       }
     });
 
@@ -138,12 +139,12 @@ export default {
       );
     });
 
-    const roomCode = this.$route.query.roomCode;
+    // const roomCode = this.$route.query.roomCode;
 
-    if (roomCode) {
-      this.$router.push({ name: "Home", query: { roomCode: roomCode } });
-      socket.emit("join-room", roomCode);
-    }
+    // if (roomCode) {
+    //   this.$router.push({ name: "Home", query: { roomCode: roomCode } });
+    //   socket.emit("join-room", roomCode);
+    // }
   },
 };
 </script>

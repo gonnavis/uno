@@ -4,7 +4,7 @@
     <h2>By Freddie</h2>
 
     <div class="container">
-      <label for="username">Username</label>
+      <label for="username">Username*</label>
       <div class="input username-input">
         <input
           v-model="username"

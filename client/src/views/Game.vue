@@ -605,6 +605,7 @@ export default {
         Start Game
       </button>
       <div class="top-left-text">
+        <p class="room">Room Code: {{ room.id }}</p>
         <p class="players">
           Players: {{ playerCount === 0 ? 1 : playerCount }} / 4
         </p>
