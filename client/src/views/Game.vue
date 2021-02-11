@@ -335,10 +335,10 @@ export default {
     async startGame() {
       this.cards = [];
 
-      await this.giveCards(1, undefined, false);
-      await this.giveCards(1, "left", false);
-      await this.giveCards(1, "top", false);
-      await this.giveCards(1, "right", false);
+      await this.giveCards(7, undefined, false);
+      await this.giveCards(7, "left", false);
+      await this.giveCards(7, "top", false);
+      await this.giveCards(7, "right", false);
 
       if (this.host) {
         this.findPlayable();
