@@ -12,8 +12,11 @@
       @join-room="joinRoom"
       @create-room="createRoom"
       @draw-card="drawCard"
+      @has-won="hasWon"
+      @reset-game="resetGame"
       :response="response"
       :host="host"
+      :winner="winner"
     />
   </div>
 </template>
@@ -43,9 +46,23 @@ export default {
         players: [],
       },
       socketId: "",
+      winner: null,
     };
   },
   methods: {
+    resetGame() {
+      socket.emit("leave-game", this.socketId);
+
+      this.room = {
+        id: "",
+        players: [],
+      };
+
+      this.winner = null;
+      this.roomId = "";
+      this.start = false;
+      this.host = null;
+    },
     joinRoom(data) {
       if (this.roomId) return;
 
@@ -79,6 +96,9 @@ export default {
         id: this.socketId,
         skipIfReceiver: true,
       });
+    },
+    hasWon() {
+      socket.emit("has-won", this.socketId);
     },
   },
   mounted() {
@@ -137,6 +157,10 @@ export default {
         data.amount,
         this.$refs.router.getPosFromId(data.id)
       );
+    });
+
+    socket.on("winner", (id) => {
+      this.winner = id;
     });
 
     // const roomCode = this.$route.query.roomCode;

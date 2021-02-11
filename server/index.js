@@ -9,8 +9,17 @@ const rooms = {};
 io.on("connection", (socket) => {
   console.log("connection");
 
-  socket.on("disconnect", () => {
+  const leaveRoom = () => {
+    const room = rooms[socket.roomId];
+    if (!room) return;
+    const index = room.players.findIndex((playerId) => playerId === socket.id);
+    room.players.splice(index, 1);
+
     io.to(socket.roomId).emit("player-disconnect", socket.id);
+  };
+
+  socket.on("disconnect", () => {
+    leaveRoom();
   });
 
   socket.on("create-room", (username) => {
@@ -73,6 +82,14 @@ io.on("connection", (socket) => {
 
   socket.on("add-cards", (data) => {
     io.to(socket.roomId).emit("give-cards", data);
+  });
+
+  socket.on("has-won", (id) => {
+    io.to(socket.roomId).emit("winner", id);
+  });
+
+  socket.on("leave-game", (id) => {
+    leaveRoom();
   });
 });
 

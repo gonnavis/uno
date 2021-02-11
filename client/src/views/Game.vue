@@ -33,6 +33,10 @@ export default {
       type: String,
       default: "",
     },
+    winner: {
+      type: String,
+      default: null,
+    },
   },
   data() {
     return {
@@ -57,6 +61,11 @@ export default {
       wildcardColor: null,
       wildcardTemp: null,
       drawing: false,
+      winnerFound: false,
+      winnerData: {
+        pos: null,
+        username: null,
+      },
     };
   },
   computed: {
@@ -106,8 +115,33 @@ export default {
       this.wildcardTemp.card.number = this.wildcardColor;
       this.cardClicked(this.wildcardTemp, true);
     },
+    cards(val) {
+      if (val.length === 0) {
+        this.$emit("has-won");
+      }
+    },
+    winner(id) {
+      if (id === null) return;
+
+      this.winnerData.pos = this.getPosFromId(id);
+
+      if (this.winnerData.pos === "you") {
+        this.winnerData.username = "you";
+      } else {
+        this.winnerData.username = this.getUsernameFromId(id);
+      }
+
+      this.winnerFound = true;
+    },
   },
   methods: {
+    resetGame(goToHome) {
+      this.$emit("reset-game");
+
+      if (goToHome) {
+        this.$router.push("/");
+      }
+    },
     getUsernameFromId(id) {
       const index = this.room.players.findIndex((player) => player === id);
       return this.room.usernames[index];
@@ -301,10 +335,10 @@ export default {
     async startGame() {
       this.cards = [];
 
-      await this.giveCards(7, undefined, false);
-      await this.giveCards(7, "left", false);
-      await this.giveCards(7, "top", false);
-      await this.giveCards(7, "right", false);
+      await this.giveCards(1, undefined, false);
+      await this.giveCards(1, "left", false);
+      await this.giveCards(1, "top", false);
+      await this.giveCards(1, "right", false);
 
       if (this.host) {
         this.findPlayable();
@@ -468,6 +502,18 @@ export default {
 
 <template>
   <div class="game">
+    <div v-if="winnerFound" class="winner">
+      <div class="card">
+        <h1>
+          Congratulations to {{ winnerData.username }} on winning the game!
+        </h1>
+
+        <button class="btn rounded-btn" @click="resetGame(true)">
+          Main Menu
+        </button>
+      </div>
+    </div>
+
     <div v-if="pickColor" class="color-picker">
       <div class="container">
         <button @click="wildcardColor = 3" class="red"></button>
@@ -476,6 +522,7 @@ export default {
         <button @click="wildcardColor = 4" class="blue"></button>
       </div>
     </div>
+
     <div class="pile">
       <Card
         v-for="card in pile"
@@ -488,7 +535,9 @@ export default {
         :pile="true"
       />
     </div>
-    <div class="direction" :class="{ reverse: !playDirectionReverse }"></div>
+
+    <div class="direction" :class="{ reverse: !playDirectionReverse }" />
+
     <div class="cards other right">
       <Card
         v-for="i in right.count"
@@ -599,7 +648,7 @@ export default {
       </div>
       <button
         v-if="canStartGame"
-        class="start-btn"
+        class="start-btn rounded-btn"
         @click="$emit('start-game')"
       >
         Start Game
@@ -609,6 +658,9 @@ export default {
         <p class="players">
           Players: {{ playerCount === 0 ? 1 : playerCount }} / 4
         </p>
+        <button class="rounded-btn leave-btn" @click="resetGame(true)">
+          Leave Game
+        </button>
       </div>
     </div>
   </div>
@@ -626,6 +678,52 @@ export default {
   overflow: hidden;
 }
 
+.winner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+
+  .card {
+    margin: auto;
+    background-color: white;
+    padding: 35px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+
+    h1 {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .btn {
+      margin-top: 10px;
+    }
+  }
+}
+
+.rounded-btn {
+  padding: 14px 22px;
+  background-color: #ff520d;
+  color: #fff;
+  border: 2px solid white;
+  border-radius: 6px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+  outline: none;
+
+  &:hover {
+    background-color: #ff8e0d;
+  }
+}
+
 .hud {
   margin-top: auto;
   z-index: 400;
@@ -634,19 +732,6 @@ export default {
     position: absolute;
     top: 20px;
     right: 20px;
-    padding: 14px 22px;
-    background-color: #ff520d;
-    color: #fff;
-    border: 2px solid white;
-    border-radius: 6px;
-    font-size: 1.5rem;
-    font-weight: bold;
-    transition: background-color 0.2s ease;
-    outline: none;
-
-    &:hover {
-      background-color: #ff8e0d;
-    }
   }
 
   .top-left-text {
@@ -656,6 +741,12 @@ export default {
     color: white;
     font-weight: bold;
     font-size: 1.2rem;
+
+    .leave-btn {
+      padding: 5px 10px;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
   }
 
   .player-card {
