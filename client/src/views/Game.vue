@@ -600,7 +600,9 @@ export default {
       </div>
       <div
         class="stack"
-        @click="canDraw && !drawing ? addCard('you', true, true) : null"
+        @click="
+          this.turn === 'you' && !drawing ? addCard('you', true, true) : null
+        "
       >
         <Card :color="'plus4'" :number="6" />
         <Card :color="'plus4'" :number="6" />
