@@ -49,6 +49,18 @@ export default {
       winner: null,
     };
   },
+  computed: {
+    currentRoute() {
+      return this.$route.name;
+    },
+  },
+  watch: {
+    currentRoute(val) {
+      if (val === "Home" && this.room.id) {
+        this.resetGame();
+      }
+    },
+  },
   methods: {
     resetGame() {
       socket.emit("leave-game", this.socketId);
@@ -118,13 +130,13 @@ export default {
       this.room = room;
       this.host = true;
 
-      this.$router.push({ name: "Game" });
+      this.$router.push({ name: "Game", query: { room: room.id } });
     });
 
     socket.on("join-room-response", (res) => {
       if (res.error) this.response = res;
       else {
-        this.$router.push({ name: "Game" });
+        this.$router.push({ name: "Game", query: { room: this.room.id } });
       }
     });
 

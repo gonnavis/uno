@@ -136,7 +136,7 @@ export default {
   },
   methods: {
     copyJoinRoomLink() {
-      const link = `${window.location.href}?room=${this.room.id}`;
+      const link = `${window.location.origin}/game?room=${this.room.id}`;
       window.navigator.clipboard
         .writeText(link)
         .then(() => alert("Copied!"))
