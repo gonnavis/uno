@@ -106,7 +106,11 @@ export default {
 
     socket.on("player-disconnect", (id) => {
       const room = { ...this.room };
-      room.players = room.players.filter((playerId) => playerId !== id);
+
+      const index = room.players.findIndex((playerId) => playerId === id);
+      room.players.splice(index, 1);
+      room.usernames.splice(index, 1);
+
       this.room = room;
     });
 
@@ -118,9 +122,8 @@ export default {
     });
 
     socket.on("join-room-response", (res) => {
-      this.response = res;
-
-      if (!this.response.error) {
+      if (res.error) this.response = res;
+      else {
         this.$router.push({ name: "Game" });
       }
     });
@@ -163,12 +166,21 @@ export default {
       this.winner = id;
     });
 
-    // const roomCode = this.$route.query.roomCode;
+    const roomCode = this.$route.query.room;
 
-    // if (roomCode) {
-    //   this.$router.push({ name: "Home", query: { roomCode: roomCode } });
-    //   socket.emit("join-room", roomCode);
-    // }
+    if (roomCode) {
+      this.$router.push({ name: "Home" });
+
+      let username;
+      do {
+        username = prompt("Enter a username to continue to the game.");
+        if (!username || username.length < 3 || username.length > 24) {
+          alert("Username must be between 3 and 24 characters.");
+        }
+      } while (!username || username.length < 3 || username.length > 24);
+
+      socket.emit("join-room", { code: roomCode, username });
+    }
   },
 };
 </script>

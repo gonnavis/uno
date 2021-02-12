@@ -14,7 +14,9 @@ io.on("connection", (socket) => {
     if (!room) return;
     const index = room.players.findIndex((playerId) => playerId === socket.id);
     room.players.splice(index, 1);
+    room.usernames.splice(index, 1);
 
+    socket.leave(socket.roomId);
     io.to(socket.roomId).emit("player-disconnect", socket.id);
   };
 

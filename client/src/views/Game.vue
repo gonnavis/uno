@@ -135,6 +135,15 @@ export default {
     },
   },
   methods: {
+    copyJoinRoomLink() {
+      const link = `${window.location.href}?room=${this.room.id}`;
+      window.navigator.clipboard
+        .writeText(link)
+        .then(() => alert("Copied!"))
+        .catch((err) =>
+          alert(`Sorry we couldn't copy the link to the clipboard: ${err}`)
+        );
+    },
     resetGame(goToHome) {
       this.$emit("reset-game");
 
@@ -654,11 +663,20 @@ export default {
         Start Game
       </button>
       <div class="top-left-text">
-        <p class="room">Room Code: {{ room.id }}</p>
+        <p class="room">
+          Room Code: {{ room.id }}
+          <button
+            class="copy"
+            style="margin-top: 0px"
+            @click="copyJoinRoomLink"
+          >
+            Copy Link
+          </button>
+        </p>
         <p class="players">
           Players: {{ playerCount === 0 ? 1 : playerCount }} / 4
         </p>
-        <button class="rounded-btn leave-btn" @click="resetGame(true)">
+        <button class="rounded-btn btn" @click="resetGame(true)">
           Leave Game
         </button>
       </div>
@@ -742,10 +760,26 @@ export default {
     font-weight: bold;
     font-size: 1.2rem;
 
-    .leave-btn {
+    .btn {
       padding: 5px 10px;
       font-size: 1rem;
       margin-top: 10px;
+    }
+
+    .room {
+      .copy {
+        text-decoration: underline;
+        font-weight: bold;
+        margin-left: 12px;
+        color: #53a944;
+        outline: none;
+        transition: color 0.2s ease;
+
+        &:hover,
+        &:focus {
+          color: #50ff31;
+        }
+      }
     }
   }
 
