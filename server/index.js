@@ -35,6 +35,7 @@ io.on("connection", (socket) => {
       host: socket.id,
       players: [socket.id],
       usernames: [username],
+      stack: 0,
     };
 
     socket.join(roomId);
@@ -79,10 +80,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("plus-card-played", (data) => {
-    io.to(socket.roomId).emit("give-cards", data);
+    rooms[socket.roomId].stack += data.amount;
+    io.to(data.id).emit("can-player-stack", { stack: rooms[socket.roomId].stack, amount: data.amount });
   });
 
   socket.on("add-cards", (data) => {
+    if (data.amount === 2 || data.amount === 4) rooms[socket.roomId].stack = 0;
+
     io.to(socket.roomId).emit("give-cards", data);
   });
 

@@ -14,6 +14,7 @@
       @draw-card="drawCard"
       @has-won="hasWon"
       @reset-game="resetGame"
+      @cant-stack="cantStack"
       :response="response"
       :host="host"
       :winner="winner"
@@ -110,6 +111,9 @@ export default {
         skipIfReceiver: true,
       });
     },
+    cantStack(amount) {
+      socket.emit("add-cards", { amount, id: this.socketId });
+    },
     hasWon() {
       socket.emit("has-won", this.socketId);
     },
@@ -173,6 +177,10 @@ export default {
         data.amount,
         this.$refs.router.getPosFromId(data.id)
       );
+    });
+
+    socket.on("can-player-stack", ({ stack, amount }) => {
+      this.$refs.router.checkIfPlayerCanStack(amount, stack);
     });
 
     socket.on("winner", (id) => {

@@ -67,6 +67,8 @@ export default {
         username: null,
       },
       hasCalledUno: false,
+      stack: 0,
+      stackCardAmount: 0,
     };
   },
   computed: {
@@ -93,7 +95,9 @@ export default {
   },
   watch: {
     pile() {
-      this.findPlayable();
+      if (this.turn === "you") {
+        this.findPlayable();
+      }
     },
     start() {
       if (this.start) {
@@ -122,6 +126,13 @@ export default {
       }
 
       // punish player for not calling uno
+      if (val.length === 1) {
+        if (this.hasCalledUno) {
+          this.hasCalledUno = false;
+        } else {
+          this.giveCards(2, "you", true, true);
+        }
+      }
     },
     winner(id) {
       if (id === null) return;
@@ -138,6 +149,25 @@ export default {
     },
   },
   methods: {
+    checkIfPlayerCanStack(amount, stack) {
+      let canStack = false;
+      this.cards.forEach((card) => {
+        if (amount === 2 && card.number === 11) {
+          canStack = true;
+        } else if (amount === 4 && card.color === "plus4") {
+          canStack = true;
+        }
+      });
+
+      if (canStack) {
+        this.stack = stack;
+        this.stackCardAmount = amount;
+        this.findPlayable();
+      } else {
+        this.$emit("cant-stack", stack);
+        this.nextPlayer(this.getNextPlayerPos());
+      }
+    },
     copyJoinRoomLink() {
       const link = `${window.location.origin}/game?room=${this.room.id}`;
       window.navigator.clipboard
@@ -179,8 +209,8 @@ export default {
       const ref = pos + this[pos].count;
       this.$refs[ref][0].clicked({ target: this.$refs[ref][0].$el }, card);
     },
-    getNextPlayer() {
-      return this.playDirectionReverse ? this.left.id : this.right.id;
+    getNextPlayerPos() {
+      return this.playDirectionReverse ? "left" : "right";
     },
     nextPlayer(player) {
       // switch to next player based on play direction
@@ -235,9 +265,9 @@ export default {
         ...plus4,
       ];
     },
-    async giveCards(num, person = "you", anims = true) {
+    async giveCards(num, person = "you", anims = true, tellServer = false) {
       for (let i = 0; i < num; i++) {
-        this.addCard(person, anims);
+        this.addCard(person, anims, tellServer);
         if (anims) await this.sleep(500);
       }
 
@@ -360,6 +390,23 @@ export default {
       }
     },
     findPlayable() {
+      if (this.stack > 0) {
+        this.cards.forEach((card) => {
+          const temp = { ...card };
+          temp.playable = false;
+
+          if (this.stackCardAmount === 2 && temp.number === 11) {
+            temp.playable = true;
+          } else if (this.stackCardAmount === 4 && temp.color === "plus4") {
+            temp.playable = true;
+          }
+
+          card = temp;
+        });
+
+        return;
+      }
+
       const indexes = [];
       const topCard = this.pile[this.pile.length - 1];
 
@@ -418,11 +465,14 @@ export default {
 
         this.cards.splice(i, 1, card);
       });
+
+      this.sortCards();
     },
     cardClicked(e, skip = false) {
-      // console.log({...e});
-      // console.log(e);
-      // console.log(e.other);
+      if (this.stack > 0) {
+        this.stack = 0;
+        this.stackCardAmount = 0;
+      }
 
       if (!e.card.other) {
         if (
@@ -468,21 +518,11 @@ export default {
           }
         } else {
           if (this.playDirectionReverse) {
-            // if card is a +4 or +2 then act as skip card
-            if (e.card.color === "plus4" || e.card.number === 11) {
-              this.nextPlayer("top");
-            } else {
-              this.nextPlayer("left");
-            }
+            this.nextPlayer("left");
             playCardRes.nextPlayer = this.left.id;
             this.$emit("play-card", playCardRes);
           } else {
-            // if card is a +4 or +2 then act as skip card
-            if (e.card.color === "plus4" || e.card.number === 11) {
-              this.nextPlayer("top");
-            } else {
-              this.nextPlayer("right");
-            }
+            this.nextPlayer("right");
             playCardRes.nextPlayer = this.right.id;
             this.$emit("play-card", playCardRes);
           }
@@ -668,7 +708,9 @@ export default {
         Start Game
       </button>
       <button
-        v-if="this.cards.length === 2 && this.turn === 'you'"
+        v-if="
+          this.cards.length === 2 && this.turn === 'you' && !this.hasCalledUno
+        "
         class="uno-btn rounded-btn"
         @click="this.hasCalledUno = true"
       >
