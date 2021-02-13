@@ -74,6 +74,7 @@ export default {
       this.roomId = "";
       this.start = false;
       this.host = null;
+      this.currentPlayerId = "";
     },
     joinRoom(data) {
       if (this.roomId) return;

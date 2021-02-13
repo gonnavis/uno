@@ -66,6 +66,7 @@ export default {
         pos: null,
         username: null,
       },
+      hasCalledUno: false,
     };
   },
   computed: {
@@ -119,6 +120,8 @@ export default {
       if (val.length === 0) {
         this.$emit("has-won");
       }
+
+      // punish player for not calling uno
     },
     winner(id) {
       if (id === null) return;
@@ -244,29 +247,30 @@ export default {
     sleep(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
     },
+    generateCard(hidden = false) {
+      let colors = ["red", "green", "yellow", "blue"];
+      let color = colors[Math.floor(Math.random() * 4)];
+
+      let number = Math.floor(Math.random() * 13) + 1;
+      if (number === 10) number = 0;
+
+      // special card chance
+      if (Math.random() < 0.06) {
+        color = ["plus4", "changeColor"][Math.floor(Math.random() * 2)];
+        number = 1;
+      }
+
+      return {
+        color,
+        number,
+        id: uniqid.time(),
+        hidden,
+      };
+    },
     addCard(person = "you", anims = true, tellServer) {
-      let card;
+      const card = this.generateCard(anims);
 
       if (person === "you") {
-        let colors = ["red", "green", "yellow", "blue"];
-        let color = colors[Math.floor(Math.random() * 4)];
-
-        let number = Math.floor(Math.random() * 13) + 1;
-        if (number === 10) number = 0;
-
-        // special card chance
-        if (Math.random() < 0.1) {
-          color = ["plus4", "changeColor"][Math.floor(Math.random() * 2)];
-          number = 1;
-        }
-
-        card = {
-          color,
-          number,
-          id: uniqid.time(),
-          hidden: anims,
-        };
-
         this.cards.push(card);
 
         if (tellServer) {
@@ -343,6 +347,7 @@ export default {
     },
     async startGame() {
       this.cards = [];
+      this.pile = [];
 
       await this.giveCards(7, undefined, false);
       await this.giveCards(7, "left", false);
@@ -632,28 +637,28 @@ export default {
         class="player-card you"
         :class="{ playing: this.turn === 'you' }"
       >
-        {{ this.getUsernameFromId(this.socketId) }}
+        {{ this.getUsernameFromId(this.socketId) }} : {{ this.cards.length }}
       </div>
       <div
         v-if="this.right.id && this.start"
         class="player-card right"
         :class="{ playing: this.turn === 'right' }"
       >
-        {{ this.getUsernameFromId(this.right.id) }}
+        {{ this.getUsernameFromId(this.right.id) }} : {{ this.right.count }}
       </div>
       <div
         v-if="this.left.id && this.start"
         class="player-card left"
         :class="{ playing: this.turn === 'left' }"
       >
-        {{ this.getUsernameFromId(this.left.id) }}
+        {{ this.getUsernameFromId(this.left.id) }} : {{ this.left.count }}
       </div>
       <div
         v-if="this.top.id && this.start"
         class="player-card top"
         :class="{ playing: this.turn === 'top' }"
       >
-        {{ this.getUsernameFromId(this.top.id) }}
+        {{ this.getUsernameFromId(this.top.id) }} : {{ this.top.count }}
       </div>
       <button
         v-if="canStartGame"
@@ -661,6 +666,13 @@ export default {
         @click="$emit('start-game')"
       >
         Start Game
+      </button>
+      <button
+        v-if="this.cards.length === 2 && this.turn === 'you'"
+        class="uno-btn rounded-btn"
+        @click="this.hasCalledUno = true"
+      >
+        Call Uno
       </button>
       <div class="top-left-text">
         <p class="room">
@@ -750,6 +762,13 @@ export default {
     position: absolute;
     top: 20px;
     right: 20px;
+  }
+
+  .uno-btn {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
+    font-size: 2rem;
   }
 
   .top-left-text {
