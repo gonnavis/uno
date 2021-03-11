@@ -200,7 +200,9 @@ export default {
         }
       } while (!username || username.length < 3 || username.length > 24);
 
-      socket.emit("join-room", { code: roomCode, username });
+      if (username) {
+        socket.emit("join-room", { code: roomCode, username });
+      }
     }
   },
 };

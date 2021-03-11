@@ -125,13 +125,13 @@ export default {
         this.$emit("has-won");
       }
 
+      if (val.length === 2 && this.hasCalledUno) {
+        this.hasCalledUno = false;
+      }
+
       // punish player for not calling uno
-      if (val.length === 1) {
-        if (this.hasCalledUno) {
-          this.hasCalledUno = false;
-        } else {
-          this.giveCards(2, "you", true, true);
-        }
+      if (val.length === 1 && this.turn === "you" && !this.hasCalledUno) {
+        this.giveCards(2, "you", true, true);
       }
     },
     winner(id) {
@@ -379,10 +379,10 @@ export default {
       this.cards = [];
       this.pile = [];
 
-      await this.giveCards(7, undefined, false);
-      await this.giveCards(7, "left", false);
-      await this.giveCards(7, "top", false);
-      await this.giveCards(7, "right", false);
+      await this.giveCards(2, undefined, false);
+      await this.giveCards(2, "left", false);
+      await this.giveCards(2, "top", false);
+      await this.giveCards(2, "right", false);
 
       if (this.host) {
         this.findPlayable();
@@ -712,7 +712,7 @@ export default {
           this.cards.length === 2 && this.turn === 'you' && !this.hasCalledUno
         "
         class="uno-btn rounded-btn"
-        @click="this.hasCalledUno = true"
+        @click="hasCalledUno = true"
       >
         Call Uno
       </button>
