@@ -1,7 +1,7 @@
 {
   "name": "Scuffed Uno",
   "short_name": "Scuffed Uno",
-  "start_url": "/index.html",
+  "start_url": "/",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

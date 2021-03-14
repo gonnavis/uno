@@ -19,16 +19,26 @@
       :host="host"
       :winner="winner"
     />
+
+    <div v-if="offline" class="offline">
+      <div class="message">You are currently offline and cannot play.</div>
+    </div>
   </div>
 </template>
 
 <script>
 import io from "socket.io-client";
-const socket = io(
-  process.env.NODE_ENV === "development"
-    ? `http://${window.location.hostname}:3000`
-    : "https://uno-freddie.herokuapp.com/"
-);
+let socket;
+
+if (navigator.onLine) {
+  socket = io(
+    process.env.NODE_ENV === "development"
+      ? `http://${window.location.hostname}:3000`
+      : "https://uno-freddie.herokuapp.com/"
+  );
+} else {
+  socket = "offline";
+}
 
 export default {
   name: "App",
@@ -48,6 +58,7 @@ export default {
       },
       socketId: "",
       winner: null,
+      offline: false,
     };
   },
   computed: {
@@ -119,6 +130,11 @@ export default {
     },
   },
   mounted() {
+    if (socket === "offline") {
+      this.offline = true;
+      return;
+    }
+
     socket.on("connect", () => (this.socketId = socket.id));
 
     socket.on("player-disconnect", (id) => {
@@ -223,5 +239,26 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+
+  .offline {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+
+    .message {
+      font-size: 1.8rem;
+      background-color: white;
+      border-radius: 10px;
+      padding: 2.5rem;
+      font-weight: bold;
+    }
+  }
 }
 </style>
