@@ -123,15 +123,8 @@ export default {
     cards(val) {
       if (val.length === 0) {
         this.$emit("has-won");
-      }
-
-      if (val.length === 2 && this.hasCalledUno) {
+      } else if (val.length !== 2) {
         this.hasCalledUno = false;
-      }
-
-      // punish player for not calling uno
-      if (val.length === 1 && this.turn === "you" && !this.hasCalledUno) {
-        this.giveCards(2, "you", true, true);
       }
     },
     winner(id) {
@@ -475,6 +468,13 @@ export default {
       }
 
       if (!e.card.other) {
+        // check if player should be punished for not calling uno
+        let punishUno = false;
+        if (this.cards.length === 2 && !this.hasCalledUno) {
+          punishUno = true;
+          this.giveCards(2, "you", false, false);
+        }
+
         if (
           (e.card.color === "plus4" || e.card.color === "changeColor") &&
           !skip
@@ -496,6 +496,7 @@ export default {
           card: {
             color: e.card.color,
             number: e.card.number,
+            punishUno,
           },
         };
 
@@ -541,6 +542,12 @@ export default {
         card.id = uniqid.time();
 
         this.pile.push(card);
+
+        if (e.card.other.punishUno) {
+          setTimeout(() => {
+            this.giveCards(2, e.card.other.pos, false, false);
+          });
+        }
       }
 
       if (this.pile.length >= 12) {
@@ -709,7 +716,10 @@ export default {
       </button>
       <button
         v-if="
-          this.cards.length === 2 && this.turn === 'you' && !this.hasCalledUno
+          this.cards.length === 2 &&
+          this.turn === 'you' &&
+          !this.hasCalledUno &&
+          this.playableCardsCount > 0
         "
         class="uno-btn rounded-btn"
         @click="hasCalledUno = true"
