@@ -749,10 +749,17 @@ export default {
 </template>
 
 <style lang="scss">
+$mobile: 900px;
+
 .game {
   width: 100%;
   height: 100%;
-  background-color: #780e09;
+  background: radial-gradient(
+    circle,
+    rgb(192, 34, 26) 0%,
+    rgb(146, 25, 19) 60%,
+    rgb(109, 16, 11) 100%
+  );
   position: relative;
   display: flex;
   align-items: center;
@@ -810,6 +817,24 @@ export default {
   margin-top: auto;
   z-index: 400;
 
+  @media screen and (max-width: $mobile) {
+    .top-left-text {
+      font-size: 0.8rem !important;
+
+      .btn {
+        transform: scale(0.8);
+        transform-origin: top left;
+      }
+    }
+
+    .stack {
+      transform: scale(0.52);
+      transform-origin: bottom left;
+      margin-left: -30px;
+      margin-bottom: -10px;
+    }
+  }
+
   .start-btn {
     position: absolute;
     top: 20px;
@@ -821,6 +846,12 @@ export default {
     bottom: 60px;
     right: 60px;
     font-size: 2rem;
+
+    @media screen and (max-width: $mobile) {
+      transform: scale(0.7);
+      bottom: 30px;
+      right: 30px;
+    }
   }
 
   .top-left-text {
@@ -863,6 +894,11 @@ export default {
     z-index: 100;
     font-weight: bold;
 
+    @media screen and (max-width: $mobile) {
+      transform: scale(0.6);
+      transform-origin: center;
+    }
+
     &.playing {
       box-shadow: 0px 0px 10px 9px #fcc81c;
     }
@@ -870,22 +906,40 @@ export default {
     &.right {
       right: 120px;
       top: 41%;
+
+      @media screen and (max-width: $mobile) {
+        right: 65px;
+        top: 42%;
+      }
     }
 
     &.left {
       left: 90px;
       top: 41%;
+
+      @media screen and (max-width: $mobile) {
+        left: 65px;
+        top: 42%;
+      }
     }
 
     &.top {
       left: 44.5%;
       top: 160px;
+
+      @media screen and (max-width: $mobile) {
+        top: 60px;
+      }
     }
 
     &.you {
       left: 45%;
       bottom: 15px;
       filter: brightness(0.6);
+
+      @media screen and (max-width: $mobile) {
+        bottom: 3px;
+      }
 
       &.playing {
         filter: unset;
@@ -951,6 +1005,11 @@ export default {
   animation: rotate 8s linear infinite;
   transform: scale(1.2) rotateX(55deg);
 
+  @media screen and (max-width: $mobile) {
+    transform: scale(0.58) rotateX(55deg);
+    animation: rotate-mobile 8s linear infinite;
+  }
+
   &.reverse {
     animation-direction: reverse;
 
@@ -995,12 +1054,18 @@ export default {
       transform: scale(1.2) rotateX(55deg) rotate(360deg);
     }
   }
+
+  @keyframes rotate-mobile {
+    to {
+      transform: scale(0.58) rotateX(55deg) rotate(360deg);
+    }
+  }
 }
 
 .stack {
   position: absolute;
   left: 60px;
-  bottom: 290px;
+  bottom: 29vh;
   cursor: pointer;
 
   &.canDraw {
@@ -1073,6 +1138,14 @@ export default {
   flex-direction: row;
   margin-bottom: 50px;
   margin-top: auto;
+
+  &.you {
+    @media screen and (max-width: $mobile) {
+      transform: scale(0.5);
+      transform-origin: bottom center;
+      margin-bottom: 30px;
+    }
+  }
 }
 
 .pile {
@@ -1083,6 +1156,10 @@ export default {
   align-items: center;
   transform: rotateX(55deg);
   position: absolute;
+
+  @media screen and (max-width: $mobile) {
+    transform: scale(0.4) rotateX(55deg);
+  }
 }
 
 .you {
@@ -1102,6 +1179,13 @@ export default {
     right: 130px;
     bottom: 47.6%;
 
+    @media screen and (max-width: $mobile) {
+      transform: scale(0.6);
+      transform-origin: bottom center;
+      right: 50px;
+      bottom: 31%;
+    }
+
     .card {
       transform: rotateX(25deg) rotateY(52deg) scale(0.66);
 
@@ -1115,6 +1199,13 @@ export default {
     left: 100px;
     top: 21.9%;
 
+    @media screen and (max-width: $mobile) {
+      transform: scale(0.6);
+      transform-origin: top center;
+      left: 50px;
+      top: 17%;
+    }
+
     .card {
       transform: rotateX(-25deg) rotateY(52deg) scale(0.66);
 
@@ -1127,6 +1218,13 @@ export default {
   &.top {
     top: 30px;
     margin-left: -30px;
+
+    @media screen and (max-width: $mobile) {
+      transform: scale(0.6);
+      transform-origin: top center;
+      top: 0px;
+      margin-left: -15px;
+    }
 
     .card {
       transform: rotateX(-30deg) scale(0.65);

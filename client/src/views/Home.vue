@@ -123,8 +123,9 @@ export default {
   align-items: center;
   flex-direction: column;
   background-color: #570001;
-  padding-top: 9%;
+  padding: 9% 0;
   color: white;
+  overflow-y: scroll;
 
   .response {
     width: 100%;
@@ -232,7 +233,7 @@ export default {
   h1 {
     font-family: "Rig Bold Face";
     text-transform: uppercase;
-    font-size: 12em;
+    font-size: min(12em, 18vw);
     text-align: center;
     font-weight: normal;
     margin: 0;
