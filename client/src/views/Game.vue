@@ -372,10 +372,10 @@ export default {
       this.cards = [];
       this.pile = [];
 
-      await this.giveCards(2, undefined, false);
-      await this.giveCards(2, "left", false);
-      await this.giveCards(2, "top", false);
-      await this.giveCards(2, "right", false);
+      await this.giveCards(7, undefined, false);
+      await this.giveCards(7, "left", false);
+      await this.giveCards(7, "top", false);
+      await this.giveCards(7, "right", false);
 
       if (this.host) {
         this.findPlayable();

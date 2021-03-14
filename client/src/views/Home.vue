@@ -1,7 +1,9 @@
 <template>
   <div class="home">
-    <h1><span>UNO</span></h1>
-    <h2>By Freddie</h2>
+    <div class="logo">
+      <h1><span>UNO</span></h1>
+      <h2>By Freddie</h2>
+    </div>
 
     <div class="container">
       <label for="username">Username*</label>
@@ -71,19 +73,23 @@ export default {
   data() {
     return {
       code: "",
-      username: "",
+      username: localStorage.getItem("username")
+        ? localStorage.getItem("username")
+        : "",
     };
   },
   methods: {
     createRoom() {
       if (this.username.length < 2 || this.username.length > 20) return;
 
+      localStorage.setItem("username", this.username);
       this.$emit("create-room", this.username);
     },
     joinRoom() {
       if (this.username.length < 2 || this.username.length > 20) return;
       if (this.code.length !== 8) return;
 
+      localStorage.setItem("username", this.username);
       this.$emit("join-room", { code: this.code, username: this.username });
     },
   },
@@ -116,6 +122,8 @@ export default {
   src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldInline.otf");
 }
 
+$mobile: 900px;
+
 .home {
   width: 100%;
   height: 100%;
@@ -126,6 +134,10 @@ export default {
   padding: 9% 0;
   color: white;
   overflow-y: scroll;
+
+  @media screen and (max-width: $mobile) {
+    padding: 4% 0;
+  }
 
   .response {
     width: 100%;
@@ -171,6 +183,10 @@ export default {
     width: max(40%, 400px);
     display: flex;
     flex-direction: column;
+
+    @media screen and (max-width: $mobile) {
+      width: 64%;
+    }
 
     p {
       margin: auto;
@@ -220,62 +236,76 @@ export default {
     }
   }
 
-  h2 {
-    font-weight: bold;
-    font-size: 2.5em;
-    margin-bottom: 15px;
-  }
+  .logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
-  $face: #ffdd00;
-  $shadow: black;
-  $shadow2: transparent;
-
-  h1 {
-    font-family: "Rig Bold Face";
-    text-transform: uppercase;
-    font-size: min(12em, 18vw);
-    text-align: center;
-    font-weight: normal;
-    margin: 0;
-    color: $face;
-    position: relative;
-    z-index: 2;
-    transform: rotate(-10deg);
-    margin-bottom: 20px;
-    user-select: none;
-
-    &::after {
-      content: "";
-      width: 120%;
-      height: 110%;
+    @media screen and (max-width: $mobile) {
       position: absolute;
-      background-color: #ee151f;
-      border-radius: 50%;
-      z-index: -1;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -54%);
-    }
-  }
-
-  span {
-    -webkit-text-stroke: 8px white;
-
-    &::after {
-      font-family: "Rig Bold Extrude";
-      color: $shadow;
+      left: 15px;
+      top: 15px;
+      transform: scale(0.33);
+      transform-origin: top left;
     }
 
-    &:after {
-      content: "UNO";
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      z-index: 1;
+    h2 {
+      font-weight: bold;
+      font-size: 2.5em;
+      margin-bottom: 15px;
+    }
+
+    $face: #ffdd00;
+    $shadow: black;
+    $shadow2: transparent;
+
+    h1 {
+      font-family: "Rig Bold Face";
+      text-transform: uppercase;
+      font-size: min(12em, 16vw);
+      text-align: center;
       font-weight: normal;
-      text-shadow: none;
-      -webkit-text-stroke: 4px white;
+      margin: 0;
+      color: $face;
+      position: relative;
+      z-index: 2;
+      transform: rotate(-10deg);
+      margin-bottom: 20px;
+      user-select: none;
+
+      &::after {
+        content: "";
+        width: 120%;
+        height: 110%;
+        position: absolute;
+        background-color: #ee151f;
+        border-radius: 50%;
+        z-index: -1;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -54%);
+      }
+    }
+
+    span {
+      -webkit-text-stroke: 8px white;
+
+      &::after {
+        font-family: "Rig Bold Extrude";
+        color: $shadow;
+      }
+
+      &:after {
+        content: "UNO";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        z-index: 1;
+        font-weight: normal;
+        text-shadow: none;
+        -webkit-text-stroke: 4px white;
+      }
     }
   }
 }
