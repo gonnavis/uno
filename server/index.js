@@ -7,8 +7,6 @@ const uniqid = require("uniqid");
 const rooms = {};
 
 io.on("connection", (socket) => {
-  console.log("connection");
-
   const leaveRoom = () => {
     const room = rooms[socket.roomId];
     if (!room) return;
