@@ -4,102 +4,105 @@ import HTTP from "http";
 import socketio from "socket.io";
 import uniqid from "uniqid";
 
+import setupSocket from "./socket";
+
 const app = express();
 const http = HTTP.createServer(app);
 const io = socketio(http);
 
-const rooms = {};
+io.on("connection", setupSocket);
 
-io.on("connection", (socket) => {
-  const leaveRoom = () => {
-    const room = rooms[socket.roomId];
-    if (!room) return;
-    const index = room.players.findIndex((playerId) => playerId === socket.id);
-    room.players.splice(index, 1);
-    room.usernames.splice(index, 1);
+// io.on("connection", (socket) => {
 
-    socket.leave(socket.roomId);
-    io.to(socket.roomId).emit("player-disconnect", socket.id);
-  };
+//   const leaveRoom = () => {
+//     const room = rooms[socket.roomId];
+//     if (!room) return;
+//     const index = room.players.findIndex((playerId) => playerId === socket.id);
+//     room.players.splice(index, 1);
+//     room.usernames.splice(index, 1);
 
-  socket.on("disconnect", () => {
-    leaveRoom();
-  });
+//     socket.leave(socket.roomId);
+//     io.to(socket.roomId).emit("player-disconnect", socket.id);
+//   };
 
-  socket.on("create-room", (username) => {
-    const roomId = uniqid.time();
+//   socket.on("disconnect", () => {
+//     leaveRoom();
+//   });
 
-    socket.roomId = roomId;
-    socket.roomHost = true;
+//   socket.on("create-room", (username) => {
+//     const roomId = uniqid.time();
 
-    rooms[roomId] = {
-      id: roomId,
-      host: socket.id,
-      players: [socket.id],
-      usernames: [username],
-      stack: 0,
-    };
+//     socket.roomId = roomId;
+//     socket.roomHost = true;
 
-    socket.join(roomId);
-    socket.emit("created-room", rooms[roomId]);
-  });
+//     rooms[roomId] = {
+//       id: roomId,
+//       host: socket.id,
+//       players: [socket.id],
+//       usernames: [username],
+//       stack: 0,
+//     };
 
-  socket.on("join-room", ({ code, username }) => {
-    const exists = io.sockets.adapter.rooms[code];
+//     socket.join(roomId);
+//     socket.emit("created-room", rooms[roomId]);
+//   });
 
-    if (exists) {
-      const clients = rooms[code].players.length;
-      if (clients >= 4)
-        return socket.emit("join-room-response", { error: true, message: "Room is already full." });
+//   socket.on("join-room", ({ code, username }) => {
+//     const exists = io.sockets.adapter.rooms[code];
 
-      rooms[code].players.push(socket.id);
-      rooms[code].usernames.push(username);
+//     if (exists) {
+//       const clients = rooms[code].players.length;
+//       if (clients >= 4)
+//         return socket.emit("join-room-response", { error: true, message: "Room is already full." });
 
-      socket.join(code);
-      socket.roomId = code;
-      io.to(socket.roomId).emit("room-data", rooms[code]);
+//       rooms[code].players.push(socket.id);
+//       rooms[code].usernames.push(username);
 
-      return socket.emit("join-room-response", { error: false, message: "Joined room." });
-    } else {
-      return socket.emit("join-room-response", { error: true, message: "Room does not exist." });
-    }
-  });
+//       socket.join(code);
+//       socket.roomId = code;
+//       io.to(socket.roomId).emit("room-data", rooms[code]);
 
-  socket.on("current-player", (id) => {
-    io.to(socket.roomId).emit("current-player-update", id);
-  });
+//       return socket.emit("join-room-response", { error: false, message: "Joined room." });
+//     } else {
+//       return socket.emit("join-room-response", { error: true, message: "Room does not exist." });
+//     }
+//   });
 
-  socket.on("play-card", (data) => {
-    io.to(socket.roomId).emit("played-card", data);
-  });
+//   socket.on("current-player", (id) => {
+//     io.to(socket.roomId).emit("current-player-update", id);
+//   });
 
-  socket.on("start-game", () => {
-    io.to(socket.roomId).emit("start-the-game");
-  });
+//   socket.on("play-card", (data) => {
+//     io.to(socket.roomId).emit("played-card", data);
+//   });
 
-  socket.on("reverse-card-played", () => {
-    io.to(socket.roomId).emit("reverse-play-direction");
-  });
+//   socket.on("start-game", () => {
+//     io.to(socket.roomId).emit("start-the-game");
+//   });
 
-  socket.on("plus-card-played", (data) => {
-    rooms[socket.roomId].stack += data.amount;
-    io.to(data.id).emit("can-player-stack", { stack: rooms[socket.roomId].stack, amount: data.amount });
-  });
+//   socket.on("reverse-card-played", () => {
+//     io.to(socket.roomId).emit("reverse-play-direction");
+//   });
 
-  socket.on("add-cards", (data) => {
-    if (data.amount === 2 || data.amount === 4) rooms[socket.roomId].stack = 0;
+//   socket.on("plus-card-played", (data) => {
+//     rooms[socket.roomId].stack += data.amount;
+//     io.to(data.id).emit("can-player-stack", { stack: rooms[socket.roomId].stack, amount: data.amount });
+//   });
 
-    io.to(socket.roomId).emit("give-cards", data);
-  });
+//   socket.on("add-cards", (data) => {
+//     if (data.amount === 2 || data.amount === 4) rooms[socket.roomId].stack = 0;
 
-  socket.on("has-won", (id) => {
-    io.to(socket.roomId).emit("winner", id);
-  });
+//     io.to(socket.roomId).emit("give-cards", data);
+//   });
 
-  socket.on("leave-game", (id) => {
-    leaveRoom();
-  });
-});
+//   socket.on("has-won", (id) => {
+//     io.to(socket.roomId).emit("winner", id);
+//   });
+
+//   socket.on("leave-game", (id) => {
+//     leaveRoom();
+//   });
+// });
 
 const port = process.env.PORT || 3000;
 
