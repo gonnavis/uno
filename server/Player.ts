@@ -12,6 +12,7 @@ export default class Player implements PlayerInterface {
   bot = false;
   inGame = false;
   gameId = "";
+  cards: Card[] = [];
 
   constructor(bot: boolean) {
     this.bot = bot;

@@ -2,6 +2,14 @@ import { Card, CardColor, CardType } from "./Card";
 
 const colors: CardColor[] = [0, 1, 2, 3];
 
+interface DeckInterface {
+  cards: Card[];
+
+  generateDeck(): void;
+  shuffleDeck(): void;
+  pickCard(): void;
+}
+
 export default class Deck {
   cards: Card[] = [];
 
@@ -52,7 +60,7 @@ export default class Deck {
     }
   }
 
-  pickCard(i: number) {
-    return this.cards.splice(i, 1);
+  pickCard(i: number = 0) {
+    return this.cards.splice(i, 1)[0];
   }
 }
