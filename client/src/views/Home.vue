@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div class="logo">
-      <h1><span>UNO</span></h1>
+      <img src="@/assets/logo.jpg" alt="Scuffed Uno" />
       <h2>By Freddie</h2>
     </div>
 
@@ -97,31 +97,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@font-face {
-  font-family: "Rig Bold Coarse";
-  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldCoarse.otf");
-}
-
-@font-face {
-  font-family: "Rig Bold Extrude";
-  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldExtrude.otf");
-}
-
-@font-face {
-  font-family: "Rig Bold Shadow";
-  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldShadow.otf");
-}
-
-@font-face {
-  font-family: "Rig Bold Face";
-  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldFace.otf");
-}
-
-@font-face {
-  font-family: "Rig Bold Inline";
-  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/209981/Rig-BoldInline.otf");
-}
-
 $mobile: 900px;
 
 .home {
@@ -243,10 +218,17 @@ $mobile: 900px;
 
     @media screen and (max-width: $mobile) {
       position: absolute;
-      left: 15px;
-      top: 15px;
-      transform: scale(0.33);
-      transform-origin: top left;
+      left: -12px;
+      top: 10px;
+      width: 23vw;
+
+      h2 {
+        font-size: 90% !important;
+      }
+    }
+
+    img {
+      width: 65%;
     }
 
     h2 {
@@ -258,55 +240,6 @@ $mobile: 900px;
     $face: #ffdd00;
     $shadow: black;
     $shadow2: transparent;
-
-    h1 {
-      font-family: "Rig Bold Face";
-      text-transform: uppercase;
-      font-size: min(12em, 16vw);
-      text-align: center;
-      font-weight: normal;
-      margin: 0;
-      color: $face;
-      position: relative;
-      z-index: 2;
-      transform: rotate(-10deg);
-      margin-bottom: 20px;
-      user-select: none;
-
-      &::after {
-        content: "";
-        width: 120%;
-        height: 110%;
-        position: absolute;
-        background-color: #ee151f;
-        border-radius: 50%;
-        z-index: -1;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -54%);
-      }
-    }
-
-    span {
-      -webkit-text-stroke: 8px white;
-
-      &::after {
-        font-family: "Rig Bold Extrude";
-        color: $shadow;
-      }
-
-      &:after {
-        content: "UNO";
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        z-index: 1;
-        font-weight: normal;
-        text-shadow: none;
-        -webkit-text-stroke: 4px white;
-      }
-    }
   }
 }
 </style>
