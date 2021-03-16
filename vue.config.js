@@ -39,24 +39,16 @@ module.exports = {
     name: "Scuffed Uno",
     themeColor: "#570001",
     msTileColor: "#570001",
-    backgroundColor: "#570001",
-    orientation: "landscape",
-    startUrl: "/",
     appleMobileWebAppCapable: "yes",
     appleMobileWebAppStatusBarStyle: "default",
-    icons: [
-      {
-        src: "/android-chrome-192x192.png",
-        sizes: "192x192",
-        type: "image/png",
-      },
-      {
-        src: "/android-chrome-512x512.png",
-        sizes: "512x512",
-        type: "image/png",
-      },
-    ],
-    manifestPath: "public/site.webmanifest",
+    manifestPath: "remove-manifest.json",
+    iconPaths: {
+      favicon32: null,
+      favicon16: null,
+      appleTouchIcon: null,
+      maskIcon: null,
+      msTileImage: null,
+    },
     workboxPluginMode: "InjectManifest",
     workboxOptions: {
       // swSrc is required in InjectManifest mode.
