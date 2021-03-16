@@ -1,21 +1,30 @@
+import SocketIO from "socket.io";
 import { v4 as uuid } from "uuid";
 import { Card } from "./Card";
 
 interface PlayerInterface {
   id: string;
+  socket: SocketIO.Socket | null;
   bot: boolean;
-  inGame: boolean;
-  gameId: string;
+  inRoom: boolean;
+  roomId: string;
+  cards: Card[];
+  mustStack: boolean;
 }
 export default class Player implements PlayerInterface {
   id = "";
-  bot = false;
-  inGame = false;
-  gameId = "";
-  cards: Card[] = [];
+  socket;
 
-  constructor(bot: boolean) {
+  username = "";
+  bot = false;
+  inRoom = false;
+  roomId = "";
+  cards: Card[] = [];
+  mustStack: boolean = false;
+
+  constructor(socket: SocketIO.Socket | null, bot: boolean = false) {
     this.bot = bot;
     this.id = uuid();
+    this.socket = socket;
   }
 }
