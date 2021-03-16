@@ -104,15 +104,11 @@ $mobile: 900px;
   height: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-direction: column;
   background-color: #570001;
-  padding: 9% 0;
   color: white;
   overflow-y: scroll;
-
-  @media screen and (max-width: $mobile) {
-    padding: 4% 0;
-  }
 
   .response {
     width: 100%;
@@ -218,8 +214,8 @@ $mobile: 900px;
 
     @media screen and (max-width: $mobile) {
       position: absolute;
+      margin-top: -180px;
       left: -12px;
-      top: 10px;
       width: 23vw;
 
       h2 {
