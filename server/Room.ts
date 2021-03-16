@@ -12,6 +12,7 @@ interface RoomInterface {
   pile: Card[];
   turn: Player;
   directionReversed: boolean;
+  stack: number;
 
   addPlayer(player: Player): void;
   removePlayer(player: Player): void;
@@ -30,6 +31,7 @@ export default class Room implements RoomInterface {
   pile: Card[] = [];
   turn: Player = this.host;
   directionReversed: boolean = false;
+  stack: number = 0;
 
   constructor(host: Player) {
     this.id = uuid();
@@ -90,13 +92,26 @@ export default class Room implements RoomInterface {
     this.pile.push(card);
 
     const nextPlayer = this.getNextPlayer();
+    let canStack = false;
 
     switch (card.type) {
       case CardType.Plus2:
-        this.giveCards(nextPlayer, 2);
+        if (nextPlayer.cards.filter((card) => card.type === CardType.Plus2)) {
+          this.stack += 2;
+          canStack = true;
+        } else {
+          this.giveCards(nextPlayer, this.stack + 2);
+          this.stack = 0;
+        }
         break;
       case CardType.Plus4:
-        this.giveCards(nextPlayer, 4);
+        if (nextPlayer.cards.filter((card) => card.type === CardType.Plus4)) {
+          this.stack += 4;
+          canStack = true;
+        } else {
+          this.giveCards(nextPlayer, this.stack + 4);
+          this.stack = 0;
+        }
         break;
       case CardType.Reverse:
         this.directionReversed = !this.directionReversed;
@@ -104,7 +119,10 @@ export default class Room implements RoomInterface {
     }
 
     // go to next turn
-    if (card.type === CardType.Plus2 || card.type === CardType.Plus4 || card.type === CardType.Skip) {
+    if (
+      ((card.type === CardType.Plus2 || card.type === CardType.Plus4) && !canStack) ||
+      card.type === CardType.Skip
+    ) {
       this.nextTurn(true);
     } else {
       this.nextTurn();
