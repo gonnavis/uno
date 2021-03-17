@@ -37,7 +37,7 @@
       <p style="padding: 8px">Or</p>
       <button class="create-btn" @click="createRoom">Create Room</button>
 
-      <div
+      <!-- <div
         class="response"
         :class="{ error: response.error }"
         v-if="responseRecieved"
@@ -49,7 +49,7 @@
             this.response.message
           }}
         </p>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -57,19 +57,6 @@
 <script>
 export default {
   name: "Home",
-  props: {
-    response: {
-      type: Object,
-      default() {
-        return {};
-      },
-    },
-  },
-  computed: {
-    responseRecieved() {
-      return !!this.response.message;
-    },
-  },
   data() {
     return {
       code: "",
@@ -83,14 +70,17 @@ export default {
       if (this.username.length < 2 || this.username.length > 20) return;
 
       localStorage.setItem("username", this.username);
-      this.$emit("create-room", this.username);
+      this.$store.state.socket.emit("create-room", this.username);
     },
     joinRoom() {
       if (this.username.length < 2 || this.username.length > 20) return;
-      if (this.code.length !== 8) return;
+      if (this.code.length !== 7) return;
 
       localStorage.setItem("username", this.username);
-      this.$emit("join-room", { code: this.code, username: this.username });
+      this.$store.state.socket.emit("join-room", {
+        roomId: this.code,
+        username: this.username,
+      });
     },
   },
 };

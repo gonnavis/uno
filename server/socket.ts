@@ -17,7 +17,20 @@ export default function(socket: SocketIO.Socket) {
     delete players[socket.id];
   });
 
-  socket.on("join-room", (roomId) => {
+  socket.on("create-room", (username) => {
+    if (player.inRoom) return;
+
+    player.username = username;
+
+    // create room
+    const room = new Room(player);
+    rooms[room.id] = room;
+
+    // send state to host
+    room.broadcastState();
+  });
+
+  socket.on("join-room", ({ roomId, username }) => {
     if (roomId.length !== 7) return;
 
     // get room
@@ -27,6 +40,7 @@ export default function(socket: SocketIO.Socket) {
     const player = players[socket.id];
     if (player.inRoom) return;
 
+    player.username = username;
     room.addPlayer(player);
   });
 

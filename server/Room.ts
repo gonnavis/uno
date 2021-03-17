@@ -1,8 +1,3 @@
-import { Socket } from "node:dgram";
-import { createReadStream } from "node:fs";
-import { hostname } from "node:os";
-import { isObject } from "node:util";
-import SocketIO from "socket.io";
 import { v4 as uuid } from "uuid";
 import { Card, CardType } from "./Card";
 import Deck from "./Deck";
@@ -150,6 +145,8 @@ export default class Room implements RoomInterface {
     } else {
       this.turn = this.getNextPlayer();
     }
+
+    this.broadcastState();
   }
 
   getNextPlayer(offset: number = 0): Player {
@@ -178,12 +175,15 @@ export default class Room implements RoomInterface {
 
       const state = {
         isHost: this.host.id === player.id,
-        turn: this.turn,
+        turn: this.turn.id,
         pile: this.pile,
         started: this.started,
         directionReversed: this.directionReversed,
         stack: this.stack,
-        you: player,
+        you: {
+          ...player,
+          socket: undefined,
+        },
         others: this.players.map((p) => {
           return {
             username: p.username,
