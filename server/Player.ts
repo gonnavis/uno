@@ -21,6 +21,7 @@ export default class Player implements PlayerInterface {
   roomId = "";
   cards: Card[] = [];
   mustStack: boolean = false;
+  hasCalledUno: boolean = false;
 
   constructor(socket: SocketIO.Socket | null, bot: boolean = false) {
     this.bot = bot;

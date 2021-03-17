@@ -22,34 +22,13 @@
         <hr style="margin: 22px 0" />
         <label for="roomCode">Room Code</label>
         <div class="input">
-          <input
-            v-model="code"
-            type="text"
-            name="roomCode"
-            minlength="8"
-            maxlength="8"
-            required
-          />
+          <input v-model="code" type="text" name="roomCode" />
           <button type="submit">Join</button>
         </div>
       </form>
 
       <p style="padding: 8px">Or</p>
       <button class="create-btn" @click="createRoom">Create Room</button>
-
-      <!-- <div
-        class="response"
-        :class="{ error: response.error }"
-        v-if="responseRecieved"
-      >
-        <p>
-          {{
-            (this.response.error ? "Error" : "Success") +
-            ": " +
-            this.response.message
-          }}
-        </p>
-      </div> -->
     </div>
   </div>
 </template>
@@ -120,7 +99,6 @@ $mobile: 900px;
   display: flex;
   align-items: center;
   flex-direction: column;
-  background-color: #570001;
   padding: 9% 0;
   color: white;
   overflow-y: scroll;

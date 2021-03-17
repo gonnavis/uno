@@ -25,9 +25,6 @@ export default function(socket: SocketIO.Socket) {
     // create room
     const room = new Room(player);
     rooms[room.id] = room;
-
-    // send state to host
-    room.broadcastState();
   });
 
   socket.on("join-room", ({ roomId, username }) => {
@@ -57,5 +54,17 @@ export default function(socket: SocketIO.Socket) {
     if (room.started || room.host.id !== player.id) return;
 
     room.startGame();
+  });
+
+  socket.on("call-uno", () => {
+    if (player.cards.length !== 2) return;
+
+    player.hasCalledUno = true;
+  });
+
+  socket.on("draw-card", () => {
+    if (!player.inRoom || rooms[player.roomId].turn.id !== player.id) return;
+
+    rooms[player.roomId].giveCards(player, 1, true);
   });
 }

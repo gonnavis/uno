@@ -14,15 +14,31 @@ export default {
       drawing: false,
     };
   },
+  computed: {
+    room() {
+      return this.$store.state.room;
+    },
+  },
+  methods: {
+    copyJoinRoomLink() {
+      const link = `${window.location.origin}/game?room=${this.room.id}`;
+      window.navigator.clipboard
+        .writeText(link)
+        .then(() => alert("Copied!"))
+        .catch((err) =>
+          alert(`Sorry we couldn't copy the link to the clipboard: ${err}`)
+        );
+    },
+  },
 };
 </script>
 
 <template>
   <div class="game">
-    <div v-if="winnerFound" class="winner">
+    <div v-if="room.winner" class="winner">
       <div class="card">
         <h1>
-          Congratulations to {{ winnerData.username }} on winning the game!
+          Congratulations to {{ room.winner.username }} on winning the game!
         </h1>
 
         <button class="btn rounded-btn" @click="resetGame(true)">
@@ -42,146 +58,111 @@ export default {
 
     <div class="pile">
       <Card
-        v-for="card in pile"
-        :key="card.id"
+        v-for="card in room.pile"
+        :key="`${card.color}${card.number}${card.type}`"
         :color="card.color"
         :number="card.number"
-        :offsetX="card.offsetX"
-        :offsetY="card.offsetY"
-        :pileRotate="card.rotate"
-        :pile="true"
+        :type="card.type"
       />
     </div>
 
-    <div class="direction" :class="{ reverse: !playDirectionReverse }" />
+    <div class="direction" :class="{ reverse: !room.directionReversed }" />
 
-    <div class="cards other right">
+    <div v-if="room.right" class="cards other right">
       <Card
-        v-for="i in right.count"
-        :ref="'right' + i"
+        v-for="i in room.right.count"
         :key="i"
-        :color="'plus4'"
-        :number="6"
+        back
         :style="{ zIndex: i }"
-        :length="8"
-        :index="i"
-        @clicked="cardClicked"
-        :other="true"
       />
     </div>
-    <div class="cards other left">
-      <Card
-        v-for="i in left.count"
-        :key="i"
-        :ref="'left' + i"
-        :color="'plus4'"
-        :number="6"
-        :style="{ zIndex: i }"
-        :length="8"
-        :index="i"
-        @clicked="cardClicked"
-        :other="true"
-        :left="true"
-      />
+    <div v-if="room.left" class="cards other left">
+      <Card v-for="i in room.left.count" :key="i" back :style="{ zIndex: i }" />
     </div>
-    <div class="cards other top">
-      <Card
-        v-for="i in top.count"
-        :ref="'top' + i"
-        :key="i"
-        :color="'plus4'"
-        :number="6"
-        :style="{ zIndex: i }"
-        :length="8"
-        :index="i"
-        @clicked="cardClicked"
-        :other="true"
-        :top="true"
-      />
+    <div v-if="room.top" class="cards other top">
+      <Card v-for="i in room.top.count" :key="i" back :style="{ zIndex: i }" />
     </div>
 
     <div class="hud">
-      <div class="cards you">
+      <div v-if="room.you" class="cards you">
         <Card
-          v-for="(card, i) in cards"
-          :key="card.id"
+          v-for="card in room.you.cards"
+          :key="`${card.color}${card.number}${card.type}`"
           :color="card.color"
           :number="card.number"
-          :style="{ zIndex: i }"
-          :length="cards.length"
-          :index="i"
-          :hidden="card.hidden || false"
-          :playable="(card.playable && turn === 'you') || false"
-          @clicked="cardClicked"
+          :type="card.type"
         />
       </div>
+
       <div
         class="stack"
-        @click="turn === 'you' && !drawing ? addCard('you', true, true) : null"
+        @click="
+          room.turn === room.you.id && !drawing
+            ? $store.state.socket.emit('draw-card')
+            : null
+        "
       >
-        <Card :color="'plus4'" :number="6" />
-        <Card :color="'plus4'" :number="6" />
-        <Card :color="'plus4'" :number="6" />
-        <Card :color="'plus4'" :number="6" />
-        <Card :color="'plus4'" :number="6" />
-        <Card :color="'plus4'" :number="6" />
-        <Card :color="'plus4'" :number="6" :class="{ draw: highlightStack }" />
-        <Card
-          :color="'plus4'"
-          :number="6"
-          ref="topCard"
-          :forceTransform="topCardTransform"
-          style=""
-          :noTransition="!topCardTransform ? true : false"
-        />
+        <Card back />
+        <Card back />
+        <Card back />
+        <Card back />
+        <Card back />
+        <Card back />
+        <!-- // TODO highlight when player has no playable cards -->
+        <Card back :class="{ draw: false }" />
+        <Card back ref="topCard" />
       </div>
+
+      <!-- Player display cards -->
       <div
-        v-if="this.start"
+        v-if="room.you && room.started"
         class="player-card you"
-        :class="{ playing: this.turn === 'you' }"
+        :class="{ playing: room.turn === room.you.id }"
       >
-        {{ this.getUsernameFromId(this.socketId) }} : {{ this.cards.length }}
+        {{ room.you.username }} : {{ room.you.count }}
       </div>
       <div
-        v-if="this.right.id && this.start"
+        v-if="room.right && room.started"
         class="player-card right"
-        :class="{ playing: this.turn === 'right' }"
+        :class="{ playing: room.turn === room.right.id }"
       >
-        {{ this.getUsernameFromId(this.right.id) }} : {{ this.right.count }}
+        {{ room.right.username }} : {{ room.right.count }}
       </div>
       <div
-        v-if="this.left.id && this.start"
+        v-if="room.left && room.started"
         class="player-card left"
-        :class="{ playing: this.turn === 'left' }"
+        :class="{ playing: room.turn === room.left.id }"
       >
-        {{ this.getUsernameFromId(this.left.id) }} : {{ this.left.count }}
+        {{ room.left.username }} : {{ room.left.count }}
       </div>
       <div
-        v-if="this.top.id && this.start"
+        v-if="room.top && room.started"
         class="player-card top"
-        :class="{ playing: this.turn === 'top' }"
+        :class="{ playing: room.turn === room.top.id }"
       >
-        {{ this.getUsernameFromId(this.top.id) }} : {{ this.top.count }}
+        {{ room.top.username }} : {{ room.top.count }}
       </div>
+
       <button
-        v-if="canStartGame"
+        v-if="room.isHost && !room.started && room.playerCount > 1"
         class="start-btn rounded-btn"
-        @click="$emit('start-game')"
+        @click="$store.state.socket.emit('start-game')"
       >
         Start Game
       </button>
+
       <button
         v-if="
-          this.cards.length === 2 &&
-          this.turn === 'you' &&
-          !this.hasCalledUno &&
-          this.playableCardsCount > 0
+          room.you.cards.length === 2 &&
+          room.turn === room.you.id &&
+          !room.you.hasCalledUno
         "
         class="uno-btn rounded-btn"
-        @click="hasCalledUno = true"
+        @click="$store.state.socket.emit('call-uno')"
       >
         Call Uno
       </button>
+
       <div class="top-left-text">
         <p class="room">
           Room Code: {{ room.id }}
@@ -193,10 +174,18 @@ export default {
             Copy Link
           </button>
         </p>
-        <p class="players">
-          Players: {{ playerCount === 0 ? 1 : playerCount }} / 4
-        </p>
-        <button class="rounded-btn btn" @click="resetGame(true)">
+
+        <p class="players">Players: {{ room.playerCount }} / 4</p>
+
+        <button
+          class="rounded-btn btn"
+          @click="
+            () => {
+              $store.state.socket.emit('leave-game');
+              $store.commit('SET_ROOM', {});
+            }
+          "
+        >
           Leave Game
         </button>
       </div>
@@ -210,12 +199,6 @@ $mobile: 900px;
 .game {
   width: 100%;
   height: 100%;
-  background: radial-gradient(
-    circle,
-    rgb(192, 34, 26) 0%,
-    rgb(146, 25, 19) 60%,
-    rgb(109, 16, 11) 100%
-  );
   position: relative;
   display: flex;
   align-items: center;

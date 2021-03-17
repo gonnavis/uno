@@ -7,14 +7,19 @@ export default new Vuex.Store({
   state: {
     socket: null,
     room: {
+      id: "",
       isHost: false,
       turn: "",
       pile: [],
       started: false,
       directionReversed: false,
       stack: 0,
+      playerCount: 0,
       you: {},
-      others: [],
+      right: {},
+      left: {},
+      top: {},
+      winner: {},
     },
   },
   mutations: {

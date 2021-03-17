@@ -22,29 +22,45 @@ export default {
     room() {
       return this.$store.state.room;
     },
+    route() {
+      return this.$route.name;
+    },
   },
   watch: {
     room(room) {
-      if (room.you.inRoom) {
+      if (!room.id) return this.$router.push({ name: "Home" });
+
+      if (room.you.inRoom && this.route !== "Game") {
         this.$router.push({ name: "Game" });
+      }
+    },
+    route(route) {
+      if (route === "Game" && !this.room.id)
+        return this.$route.push({ name: "Home" });
+      else if (route === "Home" && this.room.id) {
+        this.$store.state.socket.emit("leave-room");
+        this.$store.commit("SET_ROOM", {});
       }
     },
   },
   mounted() {
-    // const roomCode = this.$route.query.room;
-    // if (roomCode) {
-    //   this.$router.push({ name: "Home" });
-    //   let username;
-    //   do {
-    //     username = prompt("Enter a username to continue to the game.");
-    //     if (!username || username.length < 3 || username.length > 24) {
-    //       alert("Username must be between 3 and 24 characters.");
-    //     }
-    //   } while (!username || username.length < 3 || username.length > 24);
-    //   if (username) {
-    //     socket.emit("join-room", { code: roomCode, username });
-    //   }
-    // }
+    const roomId = this.$route.query.room;
+    if (roomId && roomId.length === 7) {
+      this.$router.push({ name: "Home" });
+      let username;
+      do {
+        username = prompt("Enter a username to continue to the game.");
+        if (!username || username.length < 2 || username.length > 20) {
+          alert("Username must be between 2 and 20 characters.");
+        }
+      } while (!username || username.length < 2 || username.length > 20);
+      if (username) {
+        this.$store.state.socket.emit("join-room", {
+          roomId,
+          username,
+        });
+      }
+    }
   },
 };
 </script>
@@ -58,7 +74,12 @@ body {
 #app {
   width: 100%;
   height: 100%;
-  background-color: #780e09;
+  background: radial-gradient(
+    circle,
+    rgb(192, 34, 26) 0%,
+    rgb(146, 25, 19) 60%,
+    rgb(109, 16, 11) 100%
+  );
   position: relative;
   display: flex;
   align-items: center;

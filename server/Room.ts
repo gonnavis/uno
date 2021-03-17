@@ -14,6 +14,7 @@ interface RoomInterface {
   turn: Player;
   directionReversed: boolean;
   stack: number;
+  winner: Player | null;
 
   addPlayer(player: Player): void;
   removePlayer(player: Player): void;
@@ -34,6 +35,7 @@ export default class Room implements RoomInterface {
   turn: Player;
   directionReversed: boolean = false;
   stack: number = 0;
+  winner: Player | null = null;
 
   constructor(host: Player) {
     this.id = uuid().substr(0, 7);
@@ -47,6 +49,7 @@ export default class Room implements RoomInterface {
     player.inRoom = true;
 
     this.players.push(player);
+    this.broadcastState();
   }
 
   removePlayer(player: Player) {
@@ -57,6 +60,8 @@ export default class Room implements RoomInterface {
     player.roomId = "";
     player.inRoom = false;
     player.cards = [];
+
+    this.broadcastState();
   }
 
   startGame() {
@@ -75,15 +80,21 @@ export default class Room implements RoomInterface {
     // pick player to start
     const randIndex = Math.floor(Math.random() * this.players.length);
     this.turn = this.players[randIndex];
+
+    this.broadcastState();
   }
 
-  giveCards(player: Player, amount: number) {
+  giveCards(player: Player, amount: number, broadcastState: boolean = false) {
     for (let i = 0; i < amount; i++) {
       if (this.deck.cards.length === 0) {
         this.refillDeckFromPile();
       }
 
       player.cards.push(this.deck.pickCard());
+    }
+
+    if (broadcastState) {
+      this.broadcastState();
     }
   }
 
@@ -123,6 +134,12 @@ export default class Room implements RoomInterface {
         break;
     }
 
+    // punish player for not calling uno
+    if (player.cards.length === 2 && !player.hasCalledUno) {
+      this.giveCards(player, 2);
+    }
+    player.hasCalledUno = false;
+
     // go to next turn
     if (
       ((card.type === CardType.Plus2 || card.type === CardType.Plus4) && !nextPlayer.mustStack) ||
@@ -140,12 +157,8 @@ export default class Room implements RoomInterface {
   }
 
   nextTurn(skip: boolean = false) {
-    if (skip) {
-      this.turn = this.getNextPlayer(1);
-    } else {
-      this.turn = this.getNextPlayer();
-    }
-
+    this.turn = skip ? this.getNextPlayer(1) : this.getNextPlayer();
+    this.checkForWinner();
     this.broadcastState();
   }
 
@@ -163,35 +176,78 @@ export default class Room implements RoomInterface {
     return this.players[i];
   }
 
+  checkForWinner() {
+    this.players.forEach((p) => (p.cards.length === 0 ? (this.winner = p) : null));
+  }
+
   refillDeckFromPile() {
     const cards = this.pile.splice(0, this.pile.length - 1);
     this.deck.cards.push(...cards);
     this.deck.shuffleDeck();
   }
 
+  // gets the player who is in the seat offset number of positions clockwise from the given player
+  getPlayerPosFromOffset(player: Player, offset: number) {
+    const playerIndex = this.players.findIndex((p) => p.id === player.id);
+    let newIndex = playerIndex + offset;
+    newIndex > this.players.length - 1 ? (newIndex -= this.players.length - 1) : null;
+
+    return this.players[newIndex];
+  }
+
   broadcastState() {
     this.players.forEach((player) => {
       if (player.bot) return;
 
+      let right;
+      let top;
+      let left;
+      if (this.players.length === 4) {
+        right = this.getPlayerPosFromOffset(player, 1);
+        top = this.getPlayerPosFromOffset(player, 2);
+        left = this.getPlayerPosFromOffset(player, 3);
+      }
+
+      const winner = this.winner ? { username: this.winner.username, id: this.winner.id } : undefined;
+
       const state = {
+        id: this.id,
         isHost: this.host.id === player.id,
         turn: this.turn.id,
         pile: this.pile,
         started: this.started,
         directionReversed: this.directionReversed,
         stack: this.stack,
+        playerCount: this.players.length,
         you: {
           ...player,
           socket: undefined,
         },
-        others: this.players.map((p) => {
-          return {
-            username: p.username,
-            count: p.cards.length,
-            id: p.id,
-            isBot: p.bot,
-          };
-        }),
+        right: right
+          ? {
+              username: right.username,
+              count: right.cards.length,
+              id: right.id,
+              isBot: right.bot,
+            }
+          : undefined,
+        top: top
+          ? {
+              username: top.username,
+              count: top.cards.length,
+              id: top.id,
+              isBot: top.bot,
+            }
+          : undefined,
+        left: left
+          ? {
+              username: left.username,
+              count: left.cards.length,
+              id: left.id,
+              isBot: left.bot,
+            }
+          : undefined,
+        winner,
       };
 
       player.socket?.emit("state", state);
