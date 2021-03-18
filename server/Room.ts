@@ -179,10 +179,10 @@ export default class Room implements RoomInterface {
 
     if (this.directionReversed) {
       i -= 1 - offset;
-      if (i < 0) i = this.players.length - 1 - offset;
+      if (i < 0) i = this.players.length + i;
     } else {
       i += 1 + offset;
-      if (i > this.players.length - 1) i = 0 + offset;
+      if (i > this.players.length - 1) i -= this.players.length;
     }
 
     return this.players[i];
