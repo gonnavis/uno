@@ -1,7 +1,3 @@
-<template>
-  <div class="card" />
-</template>
-
 <script>
 export default {
   name: "Card",
@@ -11,9 +7,14 @@ export default {
       width: 127,
       bgY: 0,
       bgX: 0,
+      rotate: 0,
     };
   },
   props: {
+    index: {
+      type: Number,
+      default: null,
+    },
     color: {
       type: Number,
       default: 0,
@@ -26,23 +27,24 @@ export default {
       type: Number,
       default: 0,
     },
+    playable: {
+      type: Boolean,
+      default: false,
+    },
     back: {
+      type: Boolean,
+      default: false,
+    },
+    pile: {
       type: Boolean,
       default: false,
     },
   },
   methods: {
-    removeCard() {
-      this.emit = false;
+    handleClick() {
+      if (this.back || this.index === null || !this.playable) return;
 
-      this.$emit("clicked", {
-        index: this.index,
-        card: {
-          color: this.color,
-          number: this.number,
-          ...this.offsets,
-        },
-      });
+      this.$store.state.socket.emit("play-card", this.index);
     },
     calculateColor() {
       const gap = 1.85;
@@ -59,12 +61,28 @@ export default {
         case 1:
         case 2:
         case 3:
-          this.bgX = (this.width + gap) * 9 + this.type;
+          this.bgX = (this.width + gap) * (9 + this.type);
           break;
         case 4:
         case 5:
           this.bgY = (this.height + gap) * this.type;
-          this.bgX = (this.width + gap) * this.color;
+          if (this.color !== 4) {
+            this.bgX = this.width + gap;
+            switch (this.color) {
+              case 0:
+                this.bgX *= 2;
+                break;
+              case 1:
+                this.bgX *= 4;
+                break;
+              case 2:
+                this.bgX *= 1;
+                break;
+              case 3:
+                this.bgX *= 3;
+                break;
+            }
+          } else this.bgX = 0;
       }
     },
   },
@@ -77,9 +95,26 @@ export default {
       this.calculateNumber();
       this.calculateType();
     }
+
+    if (this.pile) {
+      this.rotate = Math.floor(Math.random() * 360);
+    }
   },
 };
 </script>
+
+<template>
+  <div
+    class="card"
+    :class="{ playable }"
+    :style="{
+      backgroundPositionY: -bgY + 'px',
+      backgroundPositionX: -bgX + 'px',
+      transform: `rotate(${rotate}deg)`,
+    }"
+    @click="handleClick"
+  />
+</template>
 
 <style lang="scss" scoped>
 .card {

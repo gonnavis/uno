@@ -28,25 +28,31 @@ export default {
   },
   watch: {
     room(room) {
-      if (!room.id) return this.$router.push({ name: "Home" });
+      if (!room.id) {
+        if (this.route !== "Home") this.$router.push({ name: "Home" });
+        return;
+      }
 
       if (room.you.inRoom && this.route !== "Game") {
-        this.$router.push({ name: "Game" });
+        this.$router.push({ name: "Game", query: { room: room.id } });
       }
     },
     route(route) {
       if (route === "Game" && !this.room.id)
-        return this.$route.push({ name: "Home" });
+        return this.$router.push({ name: "Home" });
       else if (route === "Home" && this.room.id) {
         this.$store.state.socket.emit("leave-room");
-        this.$store.commit("SET_ROOM", {});
+        this.$store.commit("RESET_ROOM");
       }
     },
   },
   mounted() {
     const roomId = this.$route.query.room;
-    if (roomId && roomId.length === 7) {
+
+    if (this.route === "Game" && !this.room.id)
       this.$router.push({ name: "Home" });
+
+    if (roomId && roomId.length === 7) {
       let username;
       do {
         username = prompt("Enter a username to continue to the game.");

@@ -10,6 +10,9 @@ interface PlayerInterface {
   roomId: string;
   cards: Card[];
   mustStack: boolean;
+
+  clearPlayableCards(): void;
+  findPlayableCards(topCard: Card): void;
 }
 export default class Player implements PlayerInterface {
   id = "";
@@ -27,5 +30,13 @@ export default class Player implements PlayerInterface {
     this.bot = bot;
     this.id = uuid();
     this.socket = socket;
+  }
+
+  clearPlayableCards() {
+    this.cards.forEach((card) => (card.playable = false));
+  }
+
+  findPlayableCards(topCard: Card) {
+    this.cards.forEach((card) => card.checkIfPlayable(topCard, this.mustStack));
   }
 }

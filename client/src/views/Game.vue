@@ -58,11 +58,12 @@ export default {
 
     <div class="pile">
       <Card
-        v-for="card in room.pile"
-        :key="`${card.color}${card.number}${card.type}`"
+        v-for="(card, i) in room.pile"
+        :key="`${i}-pile-${card.color}${card.number}${card.type}`"
         :color="card.color"
         :number="card.number"
         :type="card.type"
+        pile
       />
     </div>
 
@@ -73,31 +74,47 @@ export default {
         v-for="i in room.right.count"
         :key="i"
         back
-        :style="{ zIndex: i }"
+        :style="{ zIndex: i, '--count': `${room.right.count}` }"
       />
     </div>
     <div v-if="room.left" class="cards other left">
-      <Card v-for="i in room.left.count" :key="i" back :style="{ zIndex: i }" />
+      <Card
+        v-for="i in room.left.count"
+        :key="i"
+        back
+        :style="{ zIndex: i, '--count': `${room.left.count}` }"
+      />
     </div>
     <div v-if="room.top" class="cards other top">
-      <Card v-for="i in room.top.count" :key="i" back :style="{ zIndex: i }" />
+      <Card
+        v-for="i in room.top.count"
+        :key="i"
+        back
+        :style="{ zIndex: i, '--count': `${room.top.count}` }"
+      />
     </div>
 
     <div class="hud">
-      <div v-if="room.you" class="cards you">
+      <div
+        v-if="room.you"
+        class="cards you"
+        :style="{ '--count': `${room.you.count}` }"
+      >
         <Card
-          v-for="card in room.you.cards"
-          :key="`${card.color}${card.number}${card.type}`"
+          v-for="(card, i) in room.you.cards"
+          :key="`${i}-you-${card.color}${card.number}${card.type}`"
+          :index="i"
           :color="card.color"
           :number="card.number"
           :type="card.type"
+          :playable="card.playable"
         />
       </div>
 
       <div
         class="stack"
         @click="
-          room.turn === room.you.id && !drawing
+          room.started && room.turn === room.you.id && !drawing
             ? $store.state.socket.emit('draw-card')
             : null
         "
@@ -153,6 +170,7 @@ export default {
 
       <button
         v-if="
+          room.you.cards &&
           room.you.cards.length === 2 &&
           room.turn === room.you.id &&
           !room.you.hasCalledUno
@@ -165,7 +183,7 @@ export default {
 
       <div class="top-left-text">
         <p class="room">
-          Room Code: {{ room.id }}
+          Room Code: <span>{{ room.id }}</span>
           <button
             class="copy"
             style="margin-top: 0px"
@@ -181,8 +199,8 @@ export default {
           class="rounded-btn btn"
           @click="
             () => {
-              $store.state.socket.emit('leave-game');
-              $store.commit('SET_ROOM', {});
+              $store.state.socket.emit('leave-room');
+              $store.commit('RESET_ROOM');
             }
           "
         >
@@ -599,6 +617,10 @@ $mobile: 900px;
   @media screen and (max-width: $mobile) {
     transform: scale(0.4) rotateX(55deg);
   }
+
+  .card {
+    position: absolute;
+  }
 }
 
 .you {
@@ -610,67 +632,43 @@ $mobile: 900px;
 .other {
   position: absolute;
 
-  .card {
-    pointer-events: none;
-  }
-
   &.right {
-    right: 130px;
-    bottom: 47.6%;
+    right: 0px;
+    bottom: 50%;
+    transform: rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg)
+      scale(0.8);
 
     @media screen and (max-width: $mobile) {
-      transform: scale(0.6);
+      right: -17%;
+      transform: rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg)
+        scale(0.4);
       transform-origin: bottom center;
-      right: 50px;
-      bottom: 31%;
-    }
-
-    .card {
-      transform: rotateX(25deg) rotateY(52deg) scale(0.66);
-
-      &:not(:first-of-type) {
-        margin-left: -95px;
-      }
     }
   }
 
   &.left {
-    left: 100px;
-    top: 21.9%;
+    left: 0px;
+    bottom: 50%;
+    transform: scaleX(-1) rotate(15deg) rotateY(50deg) rotateZ(5deg)
+      rotateX(20deg) scale(0.8);
 
     @media screen and (max-width: $mobile) {
-      transform: scale(0.6);
-      transform-origin: top center;
-      left: 50px;
-      top: 17%;
-    }
-
-    .card {
-      transform: rotateX(-25deg) rotateY(52deg) scale(0.66);
-
-      &:not(:first-of-type) {
-        margin-left: -95px;
-      }
+      left: -17%;
+      transform: scaleX(-1) rotate(15deg) rotateY(50deg) rotateZ(5deg)
+        rotateX(20deg) scale(0.4);
+      transform-origin: bottom center;
     }
   }
 
   &.top {
-    top: 30px;
+    top: 20px;
     margin-left: -30px;
+    transform: scale(0.65);
 
     @media screen and (max-width: $mobile) {
-      transform: scale(0.6);
+      transform: scale(0.3);
       transform-origin: top center;
-      top: 0px;
-      margin-left: -15px;
-    }
-
-    .card {
-      transform: rotateX(-30deg) scale(0.65);
-
-      &:not(:first-of-type) {
-        margin-left: -95px;
-      }
+      top: 20px;
     }
   }
 }

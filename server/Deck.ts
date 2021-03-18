@@ -30,15 +30,15 @@ export default class Deck {
 
       // create 2 of each plus 2, reverse, skip
       for (let type: CardType = CardType.Plus2; type <= CardType.Skip; type++) {
-        this.cards.push(new Card(0, color, type));
-        this.cards.push(new Card(0, color, type));
+        this.cards.push(new Card(-1, color, type));
+        this.cards.push(new Card(-1, color, type));
       }
     });
 
     // create 4 of wildcard, plus4
     for (let type: CardType = CardType.Wildcard; type <= CardType.Plus4; type++) {
-      this.cards.push(new Card(0, CardColor.None, type));
-      this.cards.push(new Card(0, CardColor.None, type));
+      this.cards.push(new Card(-1, CardColor.None, type));
+      this.cards.push(new Card(-1, CardColor.None, type));
     }
   }
 

@@ -1,4 +1,5 @@
 import SocketIO from "socket.io";
+import { CardColor } from "./Card";
 import Player from "./Player";
 import Room from "./Room";
 
@@ -57,7 +58,13 @@ export default function(socket: SocketIO.Socket) {
   });
 
   socket.on("call-uno", () => {
-    if (player.cards.length !== 2) return;
+    if (
+      !player.inRoom ||
+      !rooms[player.roomId].started ||
+      rooms[player.roomId].turn.id !== player.id ||
+      player.cards.length !== 2
+    )
+      return;
 
     player.hasCalledUno = true;
   });
@@ -65,6 +72,24 @@ export default function(socket: SocketIO.Socket) {
   socket.on("draw-card", () => {
     if (!player.inRoom || rooms[player.roomId].turn.id !== player.id) return;
 
-    rooms[player.roomId].giveCards(player, 1, true);
+    const room = rooms[player.roomId];
+
+    room.giveCards(player, 1, true);
+    room.broadcastState();
+  });
+
+  socket.on("play-card", (index) => {
+    if (!player.inRoom) return;
+
+    const room = rooms[player.roomId];
+    if (
+      !room.started ||
+      room.turn.id !== player.id ||
+      !player.cards[index] ||
+      player.cards[index].color === CardColor.None
+    )
+      return;
+
+    room.playCard(player, index);
   });
 }
