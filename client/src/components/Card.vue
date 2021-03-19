@@ -1,20 +1,3 @@
-<template>
-  <div
-    class="card"
-    :class="{ pile, animate, hidden, noTransition, playable }"
-    :style="{
-      marginTop,
-      transform: forceTransform ? forceTransform : animate ? animate : pile
-        ? `rotate(${pileRotate}) scale(.95) translateX(${offsetX}px) translateY(${offsetY}px) !important`
-        : `rotate(${rotate})`,
-      backgroundPositionY: -bgY + 'px',
-      backgroundPositionX: -bgX + 'px',
-    }"
-    @click="clicked"
-    @transitionend="emit ? removeCard() : null"
-  />
-</template>
-
 <script>
 export default {
   name: "Card",
@@ -22,171 +5,121 @@ export default {
     return {
       height: 197,
       width: 127,
-      marginTop: 0,
       bgY: 0,
       bgX: 0,
-      animate: null,
-      rotate: "",
-      emit: false,
-      offsets: {}
+      rotate: 0,
     };
   },
   props: {
     index: {
       type: Number,
-      default: 0,
-    },
-    length: {
-      type: Number,
-      default: 0,
+      default: null,
     },
     color: {
-      type: String,
-      default: "red",
+      type: Number,
+      default: 0,
     },
     number: {
       type: Number,
-      default: null,
+      default: 0,
+    },
+    type: {
+      type: Number,
+      default: 0,
+    },
+    playable: {
+      type: Boolean,
+      default: false,
+    },
+    back: {
+      type: Boolean,
+      default: false,
     },
     pile: {
       type: Boolean,
       default: false,
     },
-    offsetX: {
-      type: Number,
-      default: 0
-    },
-    offsetY: {
-      type: Number,
-      default: 0
-    },
-    pileRotate: {
-      type: String,
-      default: ""
-    },
-    other: {
-      type: Boolean,
-      default: false
-    },
-    left: {
-      type: Boolean,
-      default: false
-    },
-    top: {
-      type: Boolean,
-      default: false
-    },
-    forceTransform: {
-      type: String,
-      default: ""
-    },
-    hidden: {
-      type: Boolean,
-      default: false
-    },
-    noTransition: {
-      type: Boolean,
-      default: false
-    },
-    playable: {
-      type: Boolean,
-      default: false
-    }
   },
   methods: {
-    removeCard() {
-      this.emit = false;
+    handleClick() {
+      if (this.back || this.index === null || !this.playable) return;
 
-      this.$emit("clicked", {
-        index: this.index,
-        card: {
-          color: this.color,
-          number: this.number,
-          ...this.offsets
-        }
-      });
-    },
-    clicked(e, other) {
-      if (this.pile) return;
-
-      const { x, y } = e.target.getBoundingClientRect()
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-
-      const rotate = Math.floor(Math.random() * 140) - 70 + "deg";
-
-      const offsetX = Math.floor(Math.random() * 20) - 10;
-      const offsetY = Math.floor(Math.random() * 20) - 10;
-
-      const transform = `translate(${((x - centerX / 1.1) + offsetX) * -1}px, ${((y - centerY + this.height / 1.3) + offsetY) * -1}px) rotateX(55deg) rotate(${rotate}) scale(.95) !important`;
-      this.animate = transform;
-
-      this.offsets = { 
-        offsetX,
-        offsetY,
-        rotate,
-        other: other
+      // let user pick color of plus 4 or wildcard
+      if (this.type === 4 || this.type === 5) {
+        this.$emit("pick-color", this.index);
       }
 
-      this.emit = true;
+      this.$store.state.socket.emit("play-card", this.index);
     },
     calculateColor() {
       const gap = 1.85;
-
-      switch (this.color) {
-        case "red":
-          this.bgY = 0;
-          break;
-        case "green":
-          this.bgY = this.height + gap;
-          break;
-        case "yellow":
-          this.bgY = (this.height + gap) * 2;
-          break;
-        case "blue":
-          this.bgY = (this.height + gap) * 3;
-          break;
-        case "changeColor":
-          this.bgY = (this.height + gap) * 4;
-          break;
-        case "plus4":
-          this.bgY = (this.height + gap) * 5;
-          break;
-        default:
-          break;
-      }
+      this.bgY = (this.height + gap) * this.color;
     },
     calculateNumber() {
       const number = this.number === 0 ? 10 : this.number;
       this.bgX = (this.width + 1.85) * (number - 1);
     },
+    calculateType() {
+      const gap = 1.85;
+
+      switch (this.type) {
+        case 1:
+        case 2:
+        case 3:
+          this.bgX = (this.width + gap) * (9 + this.type);
+          break;
+        case 4:
+        case 5:
+          this.bgY = (this.height + gap) * this.type;
+          if (this.color !== 4) {
+            this.bgX = this.width + gap;
+            switch (this.color) {
+              case 0:
+                this.bgX *= 2;
+                break;
+              case 1:
+                this.bgX *= 4;
+                break;
+              case 2:
+                this.bgX *= 1;
+                break;
+              case 3:
+                this.bgX *= 3;
+                break;
+            }
+          } else this.bgX = 0;
+      }
+    },
   },
   mounted() {
-    const margin = 1.3 * (this.index - this.length / 2);
-    const rotate = 0.35 * margin;
-
-    if (!this.other) {
-      if (margin < 0) {
-        this.marginTop = margin * -1 + "px";
-        this.rotate = rotate + "deg";
-      } else {
-        this.marginTop = margin + "px";
-        this.rotate = rotate + "deg";
-
-      }
+    if (this.back) {
+      this.bgY = (this.height + 1.85) * 5;
+      this.bgX = (this.width + 1.85) * 5;
     } else {
-      this.marginTop = this.left ? margin * -13 + "px" : margin * 13 + "px";
+      this.calculateColor();
+      this.calculateNumber();
+      this.calculateType();
     }
 
-    if (this.top) {
-      this.marginTop = 0;
+    if (this.pile) {
+      this.rotate = Math.floor(Math.random() * 360);
     }
-
-    this.calculateColor();
-    this.calculateNumber();
   },
 };
 </script>
+
+<template>
+  <div
+    class="card"
+    :class="{ playable }"
+    :style="{
+      backgroundPositionY: -bgY + 'px',
+      backgroundPositionX: -bgX + 'px',
+      transform: `rotate(${rotate}deg)`,
+    }"
+    @click="handleClick"
+  />
+</template>
 
 <style lang="scss" scoped>
 .card {
@@ -196,7 +129,8 @@ export default {
   background-size: 1317%;
   border-radius: 14px;
   box-shadow: 0px 0px 15px 0px #00000073;
-  transition: transform 0.3s ease, margin-left 0.2s ease, box-shadow 0.2s ease, width 0.2s ease, filter 0.2s ease;
+  transition: transform 0.3s ease, margin-left 0.2s ease, box-shadow 0.2s ease,
+    width 0.2s ease, filter 0.2s ease;
   transition-delay: 0.2s;
   cursor: pointer;
   pointer-events: none;

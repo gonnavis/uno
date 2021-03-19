@@ -22,34 +22,13 @@
         <hr style="margin: 22px 0" />
         <label for="roomCode">Room Code</label>
         <div class="input">
-          <input
-            v-model="code"
-            type="text"
-            name="roomCode"
-            minlength="8"
-            maxlength="8"
-            required
-          />
+          <input v-model="code" type="text" name="roomCode" />
           <button type="submit">Join</button>
         </div>
       </form>
 
       <p style="padding: 8px">Or</p>
       <button class="create-btn" @click="createRoom">Create Room</button>
-
-      <div
-        class="response"
-        :class="{ error: response.error }"
-        v-if="responseRecieved"
-      >
-        <p>
-          {{
-            (this.response.error ? "Error" : "Success") +
-            ": " +
-            this.response.message
-          }}
-        </p>
-      </div>
     </div>
   </div>
 </template>
@@ -57,19 +36,6 @@
 <script>
 export default {
   name: "Home",
-  props: {
-    response: {
-      type: Object,
-      default() {
-        return {};
-      },
-    },
-  },
-  computed: {
-    responseRecieved() {
-      return !!this.response.message;
-    },
-  },
   data() {
     return {
       code: "",
@@ -80,17 +46,20 @@ export default {
   },
   methods: {
     createRoom() {
-      if (this.username.length < 2 || this.username.length > 20) return;
+      if (this.username.length < 1 || this.username.length > 11) return;
 
       localStorage.setItem("username", this.username);
-      this.$emit("create-room", this.username);
+      this.$store.state.socket.emit("create-room", this.username);
     },
     joinRoom() {
-      if (this.username.length < 2 || this.username.length > 20) return;
-      if (this.code.length !== 8) return;
+      if (this.username.length < 1 || this.username.length > 11) return;
+      if (this.code.length !== 7) return;
 
       localStorage.setItem("username", this.username);
-      this.$emit("join-room", { code: this.code, username: this.username });
+      this.$store.state.socket.emit("join-room", {
+        roomId: this.code,
+        username: this.username,
+      });
     },
   },
 };
@@ -106,7 +75,7 @@ $mobile: 900px;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  background-color: #570001;
+  padding: 9% 0;
   color: white;
   overflow-y: scroll;
 
