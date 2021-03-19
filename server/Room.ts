@@ -53,9 +53,18 @@ export default class Room implements RoomInterface {
   }
 
   removePlayer(player: Player) {
-    // create replacement bot
-    const bot = this.createBot(player);
-    this.addBot(bot, player);
+    let playerCount = 0;
+    this.players.forEach((p) => (!p.bot && p.id !== player.id ? playerCount++ : null));
+    if (playerCount !== 0) {
+      // create replacement bot
+      const bot = this.createBot(player);
+      this.addBot(bot, player);
+    }
+
+    if (this.host.id === player.id) {
+      const players = this.players.filter((p) => !p.bot);
+      this.host = players[Math.floor(Math.random() * players.length)];
+    }
 
     player.roomId = "";
     player.inRoom = false;
@@ -147,7 +156,7 @@ export default class Room implements RoomInterface {
     }
 
     // punish player for not calling uno
-    if (player.cards.length === 2 && !player.hasCalledUno) {
+    if (player.cards.length === 1 && !player.hasCalledUno) {
       this.giveCards(player, 2);
     }
     player.hasCalledUno = false;

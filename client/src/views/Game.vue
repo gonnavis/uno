@@ -13,6 +13,7 @@ export default {
       wildcardColor: null,
       wildcardIndex: -1,
       drawing: false,
+      hasCalledUnoClient: false,
     };
   },
   computed: {
@@ -29,6 +30,10 @@ export default {
       this.pickColor = false;
       this.wildcardColor = null;
       this.wildcardIndex = -1;
+    },
+    room() {
+      if (this.room.you.count === 2 && this.hasCalledUnoClient)
+        this.hasCalledUnoClient = false;
     },
   },
   methods: {
@@ -188,13 +193,18 @@ export default {
 
       <button
         v-if="
+          room.you &&
           room.you.cards &&
           room.you.cards.length === 2 &&
           room.turn === room.you.id &&
-          !room.you.hasCalledUno
+          !room.you.hasCalledUno &&
+          !hasCalledUnoClient
         "
         class="uno-btn rounded-btn"
-        @click="$store.state.socket.emit('call-uno')"
+        @click="
+          $store.state.socket.emit('call-uno');
+          hasCalledUnoClient = true;
+        "
       >
         Call Uno
       </button>

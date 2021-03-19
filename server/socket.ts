@@ -10,10 +10,23 @@ export default function(socket: SocketIO.Socket) {
   const player = new Player(socket);
   players[socket.id] = player;
 
-  socket.on("disconnect", () => {
+  const leaveRoom = () => {
     if (player.inRoom) {
       rooms[player.roomId].removePlayer(player);
     }
+
+    let playerCount = 0;
+
+    if (!rooms[player.roomId]) return;
+    rooms[player.roomId].players.forEach((p) => (!p.bot ? playerCount++ : null));
+
+    if (playerCount === 0) {
+      delete rooms[player.roomId];
+    }
+  };
+
+  socket.on("disconnect", () => {
+    leaveRoom();
 
     delete players[socket.id];
   });
@@ -43,9 +56,7 @@ export default function(socket: SocketIO.Socket) {
   });
 
   socket.on("leave-room", () => {
-    if (!player.inRoom) return;
-
-    rooms[player.roomId].removePlayer(player);
+    leaveRoom();
   });
 
   socket.on("start-game", () => {
