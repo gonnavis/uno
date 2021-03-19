@@ -83,6 +83,9 @@ export default class Room implements RoomInterface {
     const randIndex = Math.floor(Math.random() * this.players.length);
     this.turn = this.players[randIndex];
     this.turn.findPlayableCards(this.topCard());
+    if (this.turn.bot) {
+      this.turn.botPlay(this);
+    }
 
     this.started = true;
 
@@ -172,6 +175,10 @@ export default class Room implements RoomInterface {
     this.turn.findPlayableCards(this.topCard());
     this.checkForWinner();
     this.broadcastState();
+
+    if (this.turn.bot) {
+      this.turn.botPlay(this);
+    }
   }
 
   getNextPlayer(offset: number = 0): Player {
@@ -278,7 +285,8 @@ export default class Room implements RoomInterface {
 
     const botNames = ["John", "James", "Alice", "Sean", "Joe", "Fred", "Bob", "Pat", "Jack", "Adam"];
     bot.username = `Bot ${botNames[Math.floor(Math.random() * botNames.length)]}`;
-    if (player) bot.cards = player.cards;
+
+    if (player) bot.cards = [...player.cards];
 
     return bot;
   }
@@ -290,7 +298,7 @@ export default class Room implements RoomInterface {
 
       if (this.turn.id === player.id) {
         this.turn = bot;
-        // TODO implement bot playing logic
+        this.turn.botPlay(this);
       }
     } else {
       if (this.players.length === 4) return;

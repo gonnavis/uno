@@ -1,6 +1,7 @@
 import SocketIO from "socket.io";
 import { v4 as uuid } from "uuid";
-import { Card } from "./Card";
+import { Card, CardColor, CardType } from "./Card";
+import Room from "./Room";
 
 interface PlayerInterface {
   id: string;
@@ -38,5 +39,22 @@ export default class Player implements PlayerInterface {
 
   findPlayableCards(topCard: Card) {
     this.cards.forEach((card) => card.checkIfPlayable(topCard, this.mustStack));
+  }
+
+  botPlay(room: Room) {
+    while (this.cards.findIndex((c) => c.playable) === -1) {
+      room.giveCards(this, 1, true);
+    }
+    const playableCards = this.cards.filter((c) => c.playable);
+
+    const card = playableCards[Math.floor(Math.random() * playableCards.length)];
+    if (card.type === CardType.Plus4 || card.type === CardType.Wildcard) {
+      card.color = Math.floor(Math.random() * 4);
+    }
+
+    room.playCard(
+      this,
+      this.cards.findIndex((c) => c === card)
+    );
   }
 }
