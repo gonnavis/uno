@@ -1,9 +1,11 @@
+import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
 import setupSocket from "./socket";
 
-const http = createServer();
+const app = express();
+const http = createServer(app);
 const io = new Server(http);
 
 io.on("connection", setupSocket);
