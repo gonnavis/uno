@@ -52,6 +52,10 @@ export default class Player implements PlayerInterface {
       card.color = Math.floor(Math.random() * 4);
     }
 
+    if (this.cards.length === 2 && Math.random() > 0.3) {
+      this.hasCalledUno = true;
+    }
+
     room.playCard(
       this,
       this.cards.findIndex((c) => c === card)
