@@ -2,7 +2,6 @@ import { v4 as uuid } from "uuid";
 import { Card, CardType } from "./Card";
 import Deck from "./Deck";
 import Player from "./Player";
-import socket from "./socket";
 
 interface RoomInterface {
   id: string;

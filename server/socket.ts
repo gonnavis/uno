@@ -1,4 +1,4 @@
-import SocketIO from "socket.io";
+import { Socket } from "socket.io";
 import { CardColor, CardType } from "./Card";
 import Player from "./Player";
 import Room from "./Room";
@@ -6,7 +6,7 @@ import Room from "./Room";
 const players: { [index: string]: Player } = {};
 const rooms: { [index: string]: Room } = {};
 
-export default function(socket: SocketIO.Socket) {
+export default function(socket: Socket) {
   const player = new Player(socket);
   players[socket.id] = player;
 
@@ -31,7 +31,7 @@ export default function(socket: SocketIO.Socket) {
     delete players[socket.id];
   });
 
-  socket.on("create-room", (username) => {
+  socket.on("create-room", (username: string) => {
     if (player.inRoom) return;
 
     player.username = username;
@@ -41,7 +41,7 @@ export default function(socket: SocketIO.Socket) {
     rooms[room.id] = room;
   });
 
-  socket.on("join-room", ({ roomId, username }) => {
+  socket.on("join-room", ({ roomId = "", username = "" }) => {
     if (roomId.length !== 7) return;
 
     // get room
@@ -89,7 +89,7 @@ export default function(socket: SocketIO.Socket) {
     room.broadcastState();
   });
 
-  socket.on("play-card", (index, color) => {
+  socket.on("play-card", (index: number, color: number) => {
     if (!player.inRoom) return;
 
     const room = rooms[player.roomId];

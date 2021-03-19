@@ -1,19 +1,14 @@
-import path from "path";
-import express from "express";
-import HTTP from "http";
-import socketio from "socket.io";
-import uniqid from "uniqid";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 import setupSocket from "./socket";
 
-const app = express();
-const http = HTTP.createServer(app);
-const io = socketio(http);
+const http = createServer();
+const io = new Server(http);
 
 io.on("connection", setupSocket);
 
 const port = process.env.PORT || 3000;
-
 http.listen(port, () => {
   console.log("Server listening on port " + port);
 });

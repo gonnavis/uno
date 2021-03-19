@@ -1,11 +1,11 @@
-import SocketIO from "socket.io";
+import { Socket } from "socket.io";
 import { v4 as uuid } from "uuid";
-import { Card, CardColor, CardType } from "./Card";
+import { Card, CardType } from "./Card";
 import Room from "./Room";
 
 interface PlayerInterface {
   id: string;
-  socket: SocketIO.Socket | null;
+  socket: Socket | null;
   bot: boolean;
   inRoom: boolean;
   roomId: string;
@@ -27,7 +27,7 @@ export default class Player implements PlayerInterface {
   mustStack: boolean = false;
   hasCalledUno: boolean = false;
 
-  constructor(socket: SocketIO.Socket | null, bot: boolean = false) {
+  constructor(socket: Socket | null, bot: boolean = false) {
     this.bot = bot;
     this.id = uuid();
     this.socket = socket;
