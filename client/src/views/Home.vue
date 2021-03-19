@@ -46,13 +46,13 @@ export default {
   },
   methods: {
     createRoom() {
-      if (this.username.length < 2 || this.username.length > 20) return;
+      if (this.username.length < 1 || this.username.length > 11) return;
 
       localStorage.setItem("username", this.username);
       this.$store.state.socket.emit("create-room", this.username);
     },
     joinRoom() {
-      if (this.username.length < 2 || this.username.length > 20) return;
+      if (this.username.length < 1 || this.username.length > 11) return;
       if (this.code.length !== 7) return;
 
       localStorage.setItem("username", this.username);

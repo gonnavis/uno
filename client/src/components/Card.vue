@@ -44,6 +44,11 @@ export default {
     handleClick() {
       if (this.back || this.index === null || !this.playable) return;
 
+      // let user pick color of plus 4 or wildcard
+      if (this.type === 4 || this.type === 5) {
+        this.$emit("pick-color", this.index);
+      }
+
       this.$store.state.socket.emit("play-card", this.index);
     },
     calculateColor() {

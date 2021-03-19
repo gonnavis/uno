@@ -1,5 +1,5 @@
 import SocketIO from "socket.io";
-import { CardColor } from "./Card";
+import { CardColor, CardType } from "./Card";
 import Player from "./Player";
 import Room from "./Room";
 
@@ -78,17 +78,20 @@ export default function(socket: SocketIO.Socket) {
     room.broadcastState();
   });
 
-  socket.on("play-card", (index) => {
+  socket.on("play-card", (index, color) => {
     if (!player.inRoom) return;
 
     const room = rooms[player.roomId];
-    if (
-      !room.started ||
-      room.turn.id !== player.id ||
-      !player.cards[index] ||
-      player.cards[index].color === CardColor.None
-    )
-      return;
+    if (!room.started || room.turn.id !== player.id || !player.cards[index]) return;
+
+    const card = player.cards[index];
+    if (card.type === CardType.Plus4 || card.type === CardType.Wildcard) {
+      if (color !== undefined && color >= CardColor.Red && color <= CardColor.Blue) {
+        card.color = color;
+      } else {
+        return;
+      }
+    }
 
     room.playCard(player, index);
   });

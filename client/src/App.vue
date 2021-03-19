@@ -56,10 +56,10 @@ export default {
       let username;
       do {
         username = prompt("Enter a username to continue to the game.");
-        if (!username || username.length < 2 || username.length > 20) {
-          alert("Username must be between 2 and 20 characters.");
+        if (!username || username.length < 1 || username.length > 11) {
+          alert("Username must be between 2 and 11 characters.");
         }
-      } while (!username || username.length < 2 || username.length > 20);
+      } while (!username || username.length < 1 || username.length > 11);
       if (username) {
         this.$store.state.socket.emit("join-room", {
           roomId,

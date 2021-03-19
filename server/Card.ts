@@ -28,8 +28,8 @@ export class Card {
   }
 
   checkIfPlayable(topCard: Card, mustStack: boolean) {
-    if (mustStack && this.type === topCard.type) {
-      this.playable = true;
+    if (mustStack) {
+      if (this.type === topCard.type) this.playable = true;
     } else {
       if (this.type === CardType.Plus4 || this.type === CardType.Wildcard) this.playable = true;
       else if (topCard.type === CardType.Plus4 || topCard.type === CardType.Wildcard) {

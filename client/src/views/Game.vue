@@ -11,12 +11,24 @@ export default {
       topCardTransform: null,
       pickColor: false,
       wildcardColor: null,
+      wildcardIndex: -1,
       drawing: false,
     };
   },
   computed: {
     room() {
       return this.$store.state.room;
+    },
+  },
+  watch: {
+    wildcardColor(color) {
+      if (this.pickColor && color !== null) {
+        this.$store.state.socket.emit("play-card", this.wildcardIndex, color);
+      }
+
+      this.pickColor = false;
+      this.wildcardColor = null;
+      this.wildcardIndex = -1;
     },
   },
   methods: {
@@ -49,10 +61,10 @@ export default {
 
     <div v-if="pickColor" class="color-picker">
       <div class="container">
-        <button @click="wildcardColor = 3" class="red"></button>
-        <button @click="wildcardColor = 5" class="green"></button>
+        <button @click="wildcardColor = 0" class="red"></button>
+        <button @click="wildcardColor = 1" class="green"></button>
         <button @click="wildcardColor = 2" class="yellow"></button>
-        <button @click="wildcardColor = 4" class="blue"></button>
+        <button @click="wildcardColor = 3" class="blue"></button>
       </div>
     </div>
 
@@ -69,29 +81,31 @@ export default {
 
     <div class="direction" :class="{ reverse: !room.directionReversed }" />
 
-    <div v-if="room.right" class="cards other right">
+    <div
+      v-if="room.right"
+      class="cards other right"
+      :style="{ '--count': `${room.right.count}` }"
+    >
       <Card
         v-for="i in room.right.count"
         :key="i"
         back
-        :style="{ zIndex: i, '--count': `${room.right.count}` }"
+        :style="{ zIndex: i }"
       />
     </div>
-    <div v-if="room.left" class="cards other left">
-      <Card
-        v-for="i in room.left.count"
-        :key="i"
-        back
-        :style="{ zIndex: i, '--count': `${room.left.count}` }"
-      />
+    <div
+      v-if="room.left"
+      class="cards other left"
+      :style="{ '--count': `${room.left.count}` }"
+    >
+      <Card v-for="i in room.left.count" :key="i" back :style="{ zIndex: i }" />
     </div>
-    <div v-if="room.top" class="cards other top">
-      <Card
-        v-for="i in room.top.count"
-        :key="i"
-        back
-        :style="{ zIndex: i, '--count': `${room.top.count}` }"
-      />
+    <div
+      v-if="room.top"
+      class="cards other top"
+      :style="{ '--count': `${room.top.count}` }"
+    >
+      <Card v-for="i in room.top.count" :key="i" back :style="{ zIndex: i }" />
     </div>
 
     <div class="hud">
@@ -108,6 +122,10 @@ export default {
           :number="card.number"
           :type="card.type"
           :playable="card.playable"
+          @pick-color="
+            pickColor = true;
+            wildcardIndex = $event;
+          "
         />
       </div>
 
@@ -213,6 +231,7 @@ export default {
 
 <style lang="scss">
 $mobile: 900px;
+$table-rotatex: 58deg;
 
 .game {
   width: 100%;
@@ -350,6 +369,7 @@ $mobile: 900px;
     position: absolute;
     z-index: 100;
     font-weight: bold;
+    display: flex;
 
     @media screen and (max-width: $mobile) {
       transform: scale(0.6);
@@ -357,35 +377,34 @@ $mobile: 900px;
     }
 
     &.playing {
-      box-shadow: 0px 0px 10px 9px #fcc81c;
+      box-shadow: 0px 0px 8px 7px #fcc81c;
     }
 
     &.right {
-      right: 120px;
-      top: 41%;
+      right: 105px;
+      bottom: 51%;
 
       @media screen and (max-width: $mobile) {
-        right: 65px;
-        top: 42%;
+        right: 20px;
       }
     }
 
     &.left {
-      left: 90px;
-      top: 41%;
+      left: 105px;
+      bottom: 51%;
 
       @media screen and (max-width: $mobile) {
-        left: 65px;
-        top: 42%;
+        left: 10px;
       }
     }
 
     &.top {
-      left: 44.5%;
+      left: 44%;
       top: 160px;
 
       @media screen and (max-width: $mobile) {
-        top: 60px;
+        left: 40.5%;
+        top: 50px;
       }
     }
 
@@ -460,10 +479,10 @@ $mobile: 900px;
   border-bottom-color: #ffffff50;
   border-radius: 50%;
   animation: rotate 8s linear infinite;
-  transform: scale(1.2) rotateX(55deg);
+  transform: scale(1.2) rotateX($table-rotatex);
 
   @media screen and (max-width: $mobile) {
-    transform: scale(0.58) rotateX(55deg);
+    transform: scale(0.58) rotateX($table-rotatex);
     animation: rotate-mobile 8s linear infinite;
   }
 
@@ -508,13 +527,13 @@ $mobile: 900px;
 
   @keyframes rotate {
     to {
-      transform: scale(1.2) rotateX(55deg) rotate(360deg);
+      transform: scale(1.2) rotateX($table-rotatex) rotate(360deg);
     }
   }
 
   @keyframes rotate-mobile {
     to {
-      transform: scale(0.58) rotateX(55deg) rotate(360deg);
+      transform: scale(0.58) rotateX($table-rotatex) rotate(360deg);
     }
   }
 }
@@ -590,32 +609,17 @@ $mobile: 900px;
   }
 }
 
-.cards {
-  display: flex;
-  flex-direction: row;
-  margin-bottom: 50px;
-  margin-top: auto;
-
-  &.you {
-    @media screen and (max-width: $mobile) {
-      transform: scale(0.5);
-      transform-origin: bottom center;
-      margin-bottom: 30px;
-    }
-  }
-}
-
 .pile {
   width: 300px;
   height: 300px;
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: rotateX(55deg);
+  transform: rotateX($table-rotatex);
   position: absolute;
 
   @media screen and (max-width: $mobile) {
-    transform: scale(0.4) rotateX(55deg);
+    transform: scale(0.4) rotateX($table-rotatex);
   }
 
   .card {
@@ -629,46 +633,74 @@ $mobile: 900px;
   }
 }
 
-.other {
-  position: absolute;
+.cards {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 50px;
+  margin-top: auto;
 
-  &.right {
-    right: 0px;
-    bottom: 50%;
-    transform: rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg)
-      scale(0.8);
+  &.you {
+    .card {
+      margin-left: max(calc(-4.5px * var(--count)), -90px);
+    }
 
     @media screen and (max-width: $mobile) {
-      right: -17%;
+      transform: scale(0.5);
+      transform-origin: bottom center;
+      margin-bottom: 30px;
+    }
+  }
+
+  &.other {
+    position: absolute;
+
+    .card {
+      margin-left: max(calc(-5.5px * var(--count)), -105px) !important;
+    }
+
+    &.right {
+      right: 120px;
+      bottom: 48%;
+      transform-origin: bottom right;
       transform: rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg)
-        scale(0.4);
-      transform-origin: bottom center;
+        scale(0.75);
+
+      @media screen and (max-width: $mobile) {
+        right: 50px;
+        bottom: 46%;
+        transform: rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg)
+          scale(0.4);
+      }
     }
-  }
 
-  &.left {
-    left: 0px;
-    bottom: 50%;
-    transform: scaleX(-1) rotate(15deg) rotateY(50deg) rotateZ(5deg)
-      rotateX(20deg) scale(0.8);
+    &.left {
+      left: 120px;
+      bottom: 48%;
+      transform-origin: bottom left;
+      transform: rotate(-15deg) rotateY(-50deg) rotateZ(-5deg) rotateX(20deg)
+        scale(0.75);
 
-    @media screen and (max-width: $mobile) {
-      left: -17%;
-      transform: scaleX(-1) rotate(15deg) rotateY(50deg) rotateZ(5deg)
-        rotateX(20deg) scale(0.4);
-      transform-origin: bottom center;
+      @media screen and (max-width: $mobile) {
+        left: 50px;
+        bottom: 46%;
+        transform: rotate(-15deg) rotateY(-50deg) rotateZ(-5deg) rotateX(20deg)
+          scale(0.4);
+      }
+
+      .card:first-of-type {
+        margin-left: 0 !important;
+      }
     }
-  }
 
-  &.top {
-    top: 20px;
-    margin-left: -30px;
-    transform: scale(0.65);
-
-    @media screen and (max-width: $mobile) {
-      transform: scale(0.3);
-      transform-origin: top center;
+    &.top {
       top: 20px;
+      transform: scale(0.6);
+
+      @media screen and (max-width: $mobile) {
+        transform: scale(0.3);
+        transform-origin: top center;
+        top: 20px;
+      }
     }
   }
 }
