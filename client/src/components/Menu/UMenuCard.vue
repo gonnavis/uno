@@ -25,7 +25,7 @@ export default {
     </div>
     <div class="gradient"></div>
     <div class="card">
-      <img :src="graphic" alt="" class="graphic" />
+      <img draggable="false" :src="graphic" alt="" class="graphic" />
     </div>
   </div>
 </template>
@@ -38,7 +38,7 @@ export default {
   width: 317px;
   position: relative;
   transform: rotate(6deg) scale(0.9);
-  transition: transform 0.5s ease;
+  transition: transform 0.5s ease, margin 0.3s ease;
   cursor: pointer;
 
   &:hover {

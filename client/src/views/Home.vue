@@ -1,11 +1,11 @@
 <template>
-  <div class="home">
-    <div class="logo">
-      <img src="@/assets/logo.jpg" alt="Scuffed Uno" />
-      <h2>By Freddie</h2>
-    </div>
+  <section class="home">
+    <header class="header">
+      <img class="logo" src="@/assets/logo.jpg" alt="Scuffed Uno" />
+      <h1 class="title">{{ options[currentLevel + "Title"] }}</h1>
+    </header>
 
-    <div class="container">
+    <!-- <div class="container">
       <label for="username">Username*</label>
       <div class="input username-input">
         <input
@@ -29,19 +29,63 @@
 
       <p style="padding: 8px">Or</p>
       <button class="create-btn" @click="createRoom">Create Room</button>
+    </div> -->
+    <div class="options">
+      <u-menu-card
+        v-for="option in options[currentLevel]"
+        :key="option.action + option.level"
+        :action="option.action"
+        :graphic="option.graphic"
+        @click.native="option.level ? (currentLevel = option.level) : null"
+      />
     </div>
-  </div>
+  </section>
 </template>
 
 <script>
+import UMenuCard from "@/components/Menu/UMenuCard.vue";
+
 export default {
+  components: { UMenuCard },
   name: "Home",
   data() {
     return {
-      code: "",
-      username: localStorage.getItem("username")
-        ? localStorage.getItem("username")
-        : "",
+      currentLevel: "main",
+      options: {
+        mainTitle: "Main Menu",
+        main: [
+          {
+            action: "Solo Play",
+            graphic: require("@/assets/solo.jpg"),
+            level: "solo",
+          },
+          {
+            action: "Online Play",
+            graphic: require("@/assets/online.jpg"),
+            level: "online",
+          },
+          {
+            action: "Settings",
+            graphic: require("@/assets/settings.jpg"),
+            level: "settings",
+          },
+        ],
+        soloTitle: "Solo Games",
+        solo: [],
+        onlineTitle: "Online Games",
+        online: [
+          {
+            action: "Join Room",
+            graphic: require("@/assets/arrow.jpg"),
+          },
+          {
+            action: "Create Room",
+            graphic: require("@/assets/plus.jpg"),
+          },
+        ],
+        settingsTitle: "Settings",
+        settings: [],
+      },
     };
   },
   methods: {
@@ -68,16 +112,66 @@ export default {
 <style lang="scss" scoped>
 $mobile: 900px;
 
+img {
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
 .home {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  padding: 9% 0;
   color: white;
   overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+
+  .header {
+    width: 100%;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    .logo {
+      width: auto;
+      height: 100%;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .title {
+      margin-left: 30px;
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+  }
+
+  .options {
+    margin: auto;
+    display: flex;
+
+    * {
+      margin-right: -100px;
+
+      &:hover {
+        margin-right: 20px;
+      }
+
+      &:last-of-type {
+        margin-right: 0;
+
+        &:hover {
+          margin-left: 120px;
+        }
+      }
+    }
+  }
 
   .response {
     width: 100%;
@@ -174,37 +268,6 @@ $mobile: 900px;
         background-color: #b9161e;
       }
     }
-  }
-
-  .logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    @media screen and (max-width: $mobile) {
-      position: absolute;
-      margin-top: -180px;
-      left: -12px;
-      width: 23vw;
-
-      h2 {
-        font-size: 90% !important;
-      }
-    }
-
-    img {
-      width: 65%;
-    }
-
-    h2 {
-      font-weight: bold;
-      font-size: 2.5em;
-      margin-bottom: 15px;
-    }
-
-    $face: #ffdd00;
-    $shadow: black;
-    $shadow2: transparent;
   }
 }
 </style>
