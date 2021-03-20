@@ -6,7 +6,12 @@ import setupSocket from "./socket";
 
 const app = express();
 const http = createServer(app);
-const io = new Server(http);
+const io = new Server(http, {
+  cors: {
+    origin: "https://scuffeduno.online",
+    methods: ["GET", "POST"],
+  },
+});
 
 io.on("connection", setupSocket);
 
