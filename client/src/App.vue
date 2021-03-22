@@ -27,16 +27,16 @@ export default {
     },
   },
   watch: {
-    room(room) {
-      if (!room.id) {
-        if (this.route !== "Home") this.$router.push({ name: "Home" });
-        return;
-      }
+    // room(room) {
+    //   if (!room.id) {
+    //     if (this.route !== "Home") this.$router.push({ name: "Home" });
+    //     return;
+    //   }
 
-      if (room.you.inRoom && this.route !== "Game") {
-        this.$router.push({ name: "Game", query: { room: room.id } });
-      }
-    },
+    //   if (room.you.inRoom && this.route !== "Game") {
+    //     this.$router.push({ name: "Game", query: { room: room.id } });
+    //   }
+    // },
     route(route) {
       if (route === "Game" && !this.room.id)
         return this.$router.push({ name: "Home" });

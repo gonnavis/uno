@@ -55,6 +55,28 @@ export default function(socket: Socket) {
     room.addPlayer(player);
   });
 
+  socket.on("add-bot", () => {
+    if (!player.inRoom) return;
+
+    const room = rooms[player.roomId];
+    if (room.host.id !== player.id || room.players.length === 4) return;
+
+    room.addBot(room.createBot());
+    room.broadcastState();
+  });
+
+  socket.on("kick-player", (id: string) => {
+    if (!player.inRoom) return;
+
+    const room = rooms[player.roomId];
+    if (room.host.id !== player.id) return;
+
+    const remove = room.players.find((p) => p.id === id);
+    if (!remove) return;
+
+    room.removePlayer(remove, false);
+  });
+
   socket.on("leave-room", () => {
     leaveRoom();
   });

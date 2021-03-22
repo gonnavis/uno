@@ -32,11 +32,15 @@
     </div> -->
     <div class="options">
       <u-menu-card
-        v-for="option in options[currentLevel]"
-        :key="option.action + option.level"
+        v-for="(option, i) in options[currentLevel]"
+        :key="option.action + i"
         :action="option.action"
+        :alwaysShowAction="option.alwaysShowAction ? true : false"
         :graphic="option.graphic"
-        @click.native="option.level ? (currentLevel = option.level) : null"
+        @click.native="
+          option.level ? (currentLevel = option.level) : null;
+          option.func ? option.func() : null;
+        "
       />
     </div>
   </section>
@@ -50,6 +54,7 @@ export default {
   name: "Home",
   data() {
     return {
+      username: "Freddie",
       currentLevel: "main",
       options: {
         mainTitle: "Main Menu",
@@ -58,6 +63,7 @@ export default {
             action: "Solo Play",
             graphic: require("@/assets/solo.jpg"),
             level: "solo",
+            func: () => this.createRoomSolo(),
           },
           {
             action: "Online Play",
@@ -70,8 +76,19 @@ export default {
             level: "settings",
           },
         ],
-        soloTitle: "Solo Games",
-        solo: [],
+        soloTitle: "Solo Game",
+        solo: [
+          {
+            action: "You",
+            alwaysShowAction: true,
+            graphic: require("@/assets/solo.jpg"),
+          },
+          {
+            action: "Add Bot",
+            graphic: require("@/assets/plus.jpg"),
+            func: () => this.addBot(),
+          },
+        ],
         onlineTitle: "Online Games",
         online: [
           {
@@ -88,12 +105,55 @@ export default {
       },
     };
   },
+  computed: {
+    room() {
+      return this.$store.state.room;
+    },
+  },
+  watch: {
+    room(room) {
+      const players = ["You"];
+
+      if (room.right) players.push(room.right.username);
+      if (room.top) players.push(room.top.username);
+      if (room.left) players.push(room.left.username);
+
+      const solo = [];
+      for (let i = 0; i < players.length; i++) {
+        const username = players[i];
+
+        solo.push({
+          action: username,
+          alwaysShowAction: true,
+          graphic: require("@/assets/solo.jpg"),
+          func: () => this.kickPlayer(i),
+        });
+      }
+
+      if (this.currentLevel === "solo") {
+        if (solo.length < 4) {
+          solo.push({
+            action: "Add Bot",
+            graphic: require("@/assets/plus.jpg"),
+            func: () => this.addBot(),
+          });
+        }
+
+        this.options.solo = solo;
+      } else {
+        this.options.online = solo;
+      }
+    },
+  },
   methods: {
     createRoom() {
       if (this.username.length < 1 || this.username.length > 11) return;
 
       localStorage.setItem("username", this.username);
       this.$store.state.socket.emit("create-room", this.username);
+    },
+    createRoomSolo() {
+      this.createRoom();
     },
     joinRoom() {
       if (this.username.length < 1 || this.username.length > 11) return;
@@ -104,6 +164,22 @@ export default {
         roomId: this.code,
         username: this.username,
       });
+    },
+    addBot() {
+      this.$store.state.socket.emit("add-bot");
+    },
+    kickPlayer(i) {
+      switch (i) {
+        case 1:
+          this.$store.state.socket.emit("kick-player", this.room.right.id);
+          break;
+        case 2:
+          this.$store.state.socket.emit("kick-player", this.room.top.id);
+          break;
+        case 3:
+          this.$store.state.socket.emit("kick-player", this.room.left.id);
+          break;
+      }
     },
   },
 };

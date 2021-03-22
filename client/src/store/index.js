@@ -3,6 +3,8 @@ import Vuex from "vuex";
 
 Vue.use(Vuex);
 
+const username = localStorage.getItem("username") || "";
+
 const defaultRoom = {
   id: "",
   isHost: false,
@@ -22,6 +24,7 @@ const defaultRoom = {
 export default new Vuex.Store({
   state: {
     socket: null,
+    username,
     room: { ...defaultRoom },
   },
   mutations: {
@@ -33,6 +36,9 @@ export default new Vuex.Store({
     },
     RESET_ROOM(state) {
       state.room = { ...defaultRoom };
+    },
+    SET_USERNAME(state, username) {
+      state.username = username;
     },
   },
   actions: {},

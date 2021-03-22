@@ -51,17 +51,22 @@ export default class Room implements RoomInterface {
     this.broadcastState();
   }
 
-  removePlayer(player: Player) {
+  removePlayer(player: Player, replace: boolean = true) {
     let playerCount = 0;
     this.players.forEach((p) => (!p.bot && p.id !== player.id ? playerCount++ : null));
+
     if (playerCount !== 0) {
-      // create replacement bot
-      const bot = this.createBot(player);
-      this.addBot(bot, player);
+      if (replace) {
+        // create replacement bot
+        const bot = this.createBot(player);
+        this.addBot(bot, player);
+      } else {
+        this.players = this.players.filter((p) => p.id !== player.id);
+      }
     }
 
     if (this.host.id === player.id) {
-      const players = this.players.filter((p) => !p.bot);
+      const players = this.players.filter((p) => !p.bot && p.id !== player.id);
       this.host = players[Math.floor(Math.random() * players.length)];
     }
 
