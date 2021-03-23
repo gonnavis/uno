@@ -1,63 +1,3 @@
-<template>
-  <section class="home">
-    <header class="header">
-      <img class="logo" src="@/assets/logo.jpg" alt="Scuffed Uno" />
-      <h1 class="title">{{ options[currentLevel + "Title"] }}</h1>
-    </header>
-
-    <!-- <div class="container">
-      <label for="username">Username*</label>
-      <div class="input username-input">
-        <input
-          v-model="username"
-          type="text"
-          name="username"
-          minlength="2"
-          maxlength="20"
-          style="width: 100%"
-        />
-      </div>
-
-      <form @submit.prevent="joinRoom">
-        <hr style="margin: 22px 0" />
-        <label for="roomCode">Room Code</label>
-        <div class="input">
-          <input v-model="code" type="text" name="roomCode" />
-          <button type="submit">Join</button>
-        </div>
-      </form>
-
-      <p style="padding: 8px">Or</p>
-      <button class="create-btn" @click="createRoom">Create Room</button>
-    </div> -->
-    <div class="options">
-      <u-menu-card
-        v-for="(option, i) in options[currentLevel]"
-        :key="option.action + i"
-        :action="option.action"
-        :alwaysShowAction="option.alwaysShowAction ? true : false"
-        :graphic="option.graphic"
-        @click.native="
-          option.level ? (currentLevel = option.level) : null;
-          option.func ? option.func() : null;
-        "
-      />
-    </div>
-
-    <button
-      v-if="
-        (currentLevel === 'solo' || currentLevel === 'online') &&
-        room.isHost &&
-        room.playerCount > 1
-      "
-      class="start-game-btn"
-      @click="startGame"
-    >
-      Start Game
-    </button>
-  </section>
-</template>
-
 <script>
 import UMenuCard from "@/components/Menu/UMenuCard.vue";
 
@@ -66,7 +6,9 @@ export default {
   name: "Home",
   data() {
     return {
+      isMounted: false,
       username: "Freddie",
+      optionsWidth: 0,
       showCreateRoomModal: false,
       currentLevel: "main",
       options: {
@@ -122,6 +64,24 @@ export default {
   computed: {
     room() {
       return this.$store.state.room;
+    },
+    optionsScale() {
+      return Math.min(this.$store.state.windowWidth / 1500, 1);
+    },
+    optionsOffsetLeft() {
+      const windowWidth = this.$store.state.windowWidth;
+      if (this.isMounted && windowWidth < this.optionsWidth) {
+        return (windowWidth - this.optionsWidth) / 2;
+      }
+
+      return 0;
+    },
+    optionsOffsetTop() {
+      const windowHeight = this.$store.state.windowHeight;
+      if (this.isMounted && windowHeight < this.$refs.options.clientHeight)
+        return (windowHeight - this.$refs.options.clientHeight) / 2 + 10;
+
+      return 0;
     },
   },
   watch: {
@@ -200,8 +160,83 @@ export default {
       this.$router.push({ name: "Game" });
     },
   },
+  mounted() {
+    this.isMounted = true;
+
+    const observer = new ResizeObserver(() => {
+      this.optionsWidth = this.$refs.options.clientWidth;
+    });
+
+    observer.observe(this.$refs.options);
+  },
 };
 </script>
+
+<template>
+  <section class="home">
+    <header class="header">
+      <img class="logo" src="@/assets/logo.jpg" alt="Scuffed Uno" />
+      <h1 class="title">{{ options[currentLevel + "Title"] }}</h1>
+    </header>
+
+    <!-- <div class="container">
+      <label for="username">Username*</label>
+      <div class="input username-input">
+        <input
+          v-model="username"
+          type="text"
+          name="username"
+          minlength="2"
+          maxlength="20"
+          style="width: 100%"
+        />
+      </div>
+
+      <form @submit.prevent="joinRoom">
+        <hr style="margin: 22px 0" />
+        <label for="roomCode">Room Code</label>
+        <div class="input">
+          <input v-model="code" type="text" name="roomCode" />
+          <button type="submit">Join</button>
+        </div>
+      </form>
+
+      <p style="padding: 8px">Or</p>
+      <button class="create-btn" @click="createRoom">Create Room</button>
+    </div> -->
+    <div
+      ref="options"
+      class="options"
+      :style="{
+        transform: `translate(${optionsOffsetLeft}px, ${optionsOffsetTop}px) scale(${optionsScale})`,
+      }"
+    >
+      <u-menu-card
+        v-for="(option, i) in options[currentLevel]"
+        :key="option.action + i"
+        :action="option.action"
+        :alwaysShowAction="option.alwaysShowAction ? true : false"
+        :graphic="option.graphic"
+        @click.native="
+          option.level ? (currentLevel = option.level) : null;
+          option.func ? option.func() : null;
+        "
+      />
+    </div>
+
+    <button
+      v-if="
+        (currentLevel === 'solo' || currentLevel === 'online') &&
+        room.isHost &&
+        room.playerCount > 1
+      "
+      class="start-game-btn"
+      @click="startGame"
+    >
+      Start Game
+    </button>
+  </section>
+</template>
 
 <style lang="scss" scoped>
 $mobile: 900px;
@@ -219,13 +254,12 @@ img {
   width: 100%;
   height: 100%;
   color: white;
-  overflow-y: scroll;
   display: flex;
   flex-direction: column;
 
   .header {
     width: 100%;
-    height: 120px;
+    height: calc(min(15%, 120px));
     display: flex;
     align-items: center;
     position: absolute;
@@ -241,7 +275,7 @@ img {
 
     .title {
       margin-left: 30px;
-      font-size: 2.5rem;
+      font-size: clamp(1.7rem, 4vw, 2.5rem);
       font-weight: bold;
     }
   }
@@ -276,7 +310,7 @@ img {
     right: 0;
     margin: 0 auto;
     background-color: #ff520d;
-    border: 2px solid white;
+    border: 4px solid white;
     border-radius: 8px;
     font-weight: bold;
     transition: background-color 0.3s ease;

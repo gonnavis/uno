@@ -21,8 +21,10 @@ const defaultRoom = {
   winner: {},
 };
 
-export default new Vuex.Store({
+const store = new Vuex.Store({
   state: {
+    windowWidth: 1920,
+    windowHeight: 1080,
     socket: null,
     username,
     room: { ...defaultRoom },
@@ -40,7 +42,19 @@ export default new Vuex.Store({
     SET_USERNAME(state, username) {
       state.username = username;
     },
+    SET_WINDOW_DIMENSIONS(state, { width, height }) {
+      state.windowWidth = width;
+      state.windowHeight = height;
+    },
   },
   actions: {},
   modules: {},
 });
+
+const resizeObserver = new ResizeObserver(() => {
+  store.commit("SET_WINDOW_DIMENSIONS", { width: window.innerWidth, height: window.innerHeight });
+});
+
+resizeObserver.observe(document.getElementsByTagName("html")[0]);
+
+export default store;
