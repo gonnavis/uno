@@ -11,18 +11,12 @@ export default function(socket: Socket) {
   players[socket.id] = player;
 
   const leaveRoom = () => {
-    if (player.inRoom) {
-      rooms[player.roomId].removePlayer(player);
-    }
+    if (!player.inRoom) return;
 
-    let playerCount = 0;
+    const room = rooms[player.roomId];
+    room.removePlayer(player);
 
-    if (!rooms[player.roomId]) return;
-    rooms[player.roomId].players.forEach((p) => (!p.bot ? playerCount++ : null));
-
-    if (playerCount === 0) {
-      delete rooms[player.roomId];
-    }
+    if (room.isRoomEmpty) delete rooms[player.roomId];
   };
 
   socket.on("disconnect", () => {

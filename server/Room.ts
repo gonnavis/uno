@@ -14,6 +14,7 @@ interface RoomInterface {
   directionReversed: boolean;
   stack: number;
   winner: Player | null;
+  isRoomEmpty: boolean;
 
   addPlayer(player: Player): void;
   removePlayer(player: Player): void;
@@ -35,6 +36,7 @@ export default class Room implements RoomInterface {
   directionReversed: boolean = false;
   stack: number = 0;
   winner: Player | null = null;
+  isRoomEmpty: boolean = false;
 
   constructor(host: Player) {
     this.id = uuid().substr(0, 7);
@@ -63,18 +65,20 @@ export default class Room implements RoomInterface {
       } else {
         this.players = this.players.filter((p) => p.id !== player.id);
       }
-    }
 
-    if (this.host.id === player.id) {
-      const players = this.players.filter((p) => !p.bot && p.id !== player.id);
-      this.host = players[Math.floor(Math.random() * players.length)];
+      if (this.host.id === player.id) {
+        const players = this.players.filter((p) => !p.bot && p.id !== player.id);
+        this.host = players[Math.floor(Math.random() * players.length)];
+      }
+
+      this.broadcastState();
+    } else {
+      this.isRoomEmpty = true;
     }
 
     player.roomId = "";
     player.inRoom = false;
     player.cards = [];
-
-    this.broadcastState();
   }
 
   startGame() {
