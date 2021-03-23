@@ -43,6 +43,18 @@
         "
       />
     </div>
+
+    <button
+      v-if="
+        (currentLevel === 'solo' || currentLevel === 'online') &&
+        room.isHost &&
+        room.playerCount > 1
+      "
+      class="start-game-btn"
+      @click="startGame"
+    >
+      Start Game
+    </button>
   </section>
 </template>
 
@@ -55,6 +67,7 @@ export default {
   data() {
     return {
       username: "Freddie",
+      showCreateRoomModal: false,
       currentLevel: "main",
       options: {
         mainTitle: "Main Menu",
@@ -63,7 +76,7 @@ export default {
             action: "Solo Play",
             graphic: require("@/assets/solo.jpg"),
             level: "solo",
-            func: () => this.createRoomSolo(),
+            func: () => this.createRoom(),
           },
           {
             action: "Online Play",
@@ -98,6 +111,7 @@ export default {
           {
             action: "Create Room",
             graphic: require("@/assets/plus.jpg"),
+            func: () => (this.showCreateRoomModal = true),
           },
         ],
         settingsTitle: "Settings",
@@ -181,6 +195,10 @@ export default {
           break;
       }
     },
+    startGame() {
+      this.$store.state.socket.emit("start-game");
+      this.$router.push({ name: "Game" });
+    },
   },
 };
 </script>
@@ -249,6 +267,25 @@ img {
     }
   }
 
+  .start-game-btn {
+    padding: 15px 25px;
+    font-size: 2rem;
+    position: absolute;
+    bottom: 3vh;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    background-color: #ff520d;
+    border: 2px solid white;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: #e72300;
+    }
+  }
+
   .response {
     width: 100%;
     height: 60px;
@@ -269,80 +306,6 @@ img {
       background-color: rgba(255, 0, 0, 0.459);
       border: 2px solid rgb(255, 0, 0);
       color: rgb(255, 0, 0);
-    }
-  }
-
-  .create-btn {
-    width: 100%;
-    background-color: #ffd000;
-    padding: 10px;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 1.4em;
-    transition: background-color 0.2s ease;
-    outline: none;
-    margin-bottom: 10px;
-
-    &:hover,
-    &:focus {
-      background-color: #ff7b00;
-    }
-  }
-
-  .container {
-    width: max(40%, 400px);
-    display: flex;
-    flex-direction: column;
-
-    @media screen and (max-width: $mobile) {
-      width: 64%;
-    }
-
-    p {
-      margin: auto;
-    }
-  }
-
-  .input {
-    padding: 6px;
-    border-radius: 8px;
-    color: black;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    background-color: white;
-
-    input {
-      width: 82%;
-      font-size: 1.3em;
-      padding: 4px;
-      outline: none;
-    }
-  }
-
-  form {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 5px;
-
-    label {
-      font-size: 1.05em;
-      margin-bottom: 2px;
-      font-weight: 400;
-    }
-
-    button {
-      width: 18%;
-      background-color: #ee151f;
-      color: white;
-      border-radius: 5px;
-      outline: none;
-      transition: background-color 0.2s ease;
-
-      &:hover,
-      &:focus {
-        background-color: #b9161e;
-      }
     }
   }
 }
