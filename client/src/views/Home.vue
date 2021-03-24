@@ -10,11 +10,19 @@ export default {
   data() {
     return {
       isMounted: false,
-      username: "",
-      roomCode: "",
-      maxPlayers: "4",
+      formError: "",
+      createRoomForm: {
+        username: "",
+        roomCode: "",
+        maxPlayers: "4",
+      },
+      joinRoomForm: {
+        username: "",
+        roomCode: "",
+      },
       optionsWidth: 0,
       showCreateRoomModal: false,
+      showJoinRoomModal: false,
       currentLevel: "main",
       options: {
         mainTitle: "Main Menu",
@@ -43,6 +51,7 @@ export default {
           {
             action: "Join Room",
             graphic: require("@/assets/arrow.jpg"),
+            func: () => (this.showJoinRoomModal = true),
           },
           {
             action: "Create Room",
@@ -100,7 +109,7 @@ export default {
         });
       }
 
-      if (solo.length < 4) {
+      if (solo.length < room.maxPlayers && room.isHost) {
         solo.push({
           action: "Add Bot",
           graphic: require("@/assets/plus.jpg"),
@@ -111,26 +120,60 @@ export default {
       if (this.currentLevel === "solo") {
         this.options.solo = solo;
       } else {
-        this.options.online = solo;
+        this.options.onlineRoom = solo;
+      }
+
+      if (room.started) {
+        this.$router.push({ name: "Game" });
       }
     },
   },
   methods: {
     createRoom() {
-      this.$store.state.socket.emit("create-room", this.username || "You");
+      // validate form
+      if (
+        this.createRoomForm.username.length < 2 ||
+        this.createRoomForm.username.length > 11
+      )
+        return (this.formError =
+          "Username must be between 2 and 11 characters");
+      if (
+        this.createRoomForm.roomCode &&
+        (this.createRoomForm.roomCode.length < 4 ||
+          this.createRoomForm.roomCode.length > 12)
+      )
+        return (this.formError =
+          "Room Code must be between 4 and 12 characters");
+
+      this.currentLevel = "onlineRoom";
+      this.showCreateRoomModal = false;
+      this.formError = "";
+
+      this.$store.state.socket.emit("create-room", this.createRoomForm);
     },
     createRoomSolo() {
-      this.createRoom();
+      this.$store.state.socket.emit("create-room", "You");
     },
     joinRoom() {
-      if (this.username.length < 1 || this.username.length > 11) return;
-      if (this.code.length !== 7) return;
+      // validate form
+      if (
+        this.joinRoomForm.username.length < 2 ||
+        this.joinRoomForm.username.length > 11
+      )
+        return (this.formError =
+          "Username must be between 2 and 11 characters");
+      if (
+        this.joinRoomForm.roomCode.length < 4 ||
+        this.joinRoomForm.roomCode.length > 13
+      )
+        return (this.formError =
+          "Room Code must be between 4 and 12 characters");
 
-      localStorage.setItem("username", this.username);
-      this.$store.state.socket.emit("join-room", {
-        roomId: this.code,
-        username: this.username,
-      });
+      this.currentLevel = "onlineRoom";
+      this.showJoinRoomModal = false;
+      this.formError = "";
+
+      this.$store.state.socket.emit("join-room", this.joinRoomForm);
     },
     addBot() {
       this.$store.state.socket.emit("add-bot");
@@ -147,10 +190,6 @@ export default {
           this.$store.state.socket.emit("kick-player", this.room.left.id);
           break;
       }
-    },
-    startGame() {
-      this.$store.state.socket.emit("start-game");
-      this.$router.push({ name: "Game" });
     },
   },
   mounted() {
@@ -174,37 +213,64 @@ export default {
 
     <u-menu-modal
       v-if="showCreateRoomModal"
-      @close="showCreateRoomModal = false"
+      @close="
+        showCreateRoomModal = false;
+        formError = '';
+      "
       title="Create Room"
     >
       <u-menu-input
-        v-model="username"
+        v-model="createRoomForm.username"
         label="Username (required)"
         placeholder="Your username..."
       />
 
       <u-menu-input
-        v-model="roomCode"
+        v-model="createRoomForm.roomCode"
         label="Room Code (optional)"
         placeholder="Custom room code..."
-        type="text"
       />
 
       <u-menu-input
-        v-model="maxPlayers"
-        :label="`Max Players (${maxPlayers})`"
+        v-model="createRoomForm.maxPlayers"
+        :label="`Max Players (${createRoomForm.maxPlayers})`"
         type="range"
       />
 
       <div class="settings"></div>
 
-      <u-menu-btn
-        @click="
-          createRoom();
-          showCreateRoomModal = false;
-        "
-        >Create Room</u-menu-btn
-      >
+      <div v-if="formError" class="response error">
+        <p>{{ formError }}</p>
+      </div>
+
+      <u-menu-btn @click="createRoom">Create Room</u-menu-btn>
+    </u-menu-modal>
+
+    <u-menu-modal
+      v-if="showJoinRoomModal"
+      @close="
+        showJoinRoomModal = false;
+        formError = '';
+      "
+      title="Join Room"
+    >
+      <u-menu-input
+        v-model="joinRoomForm.username"
+        label="Username (required)"
+        placeholder="Your username..."
+      />
+
+      <u-menu-input
+        v-model="joinRoomForm.roomCode"
+        label="Room Code (required)"
+        placeholder="Room code..."
+      />
+
+      <div v-if="formError" class="response error">
+        <p>{{ formError }}</p>
+      </div>
+
+      <u-menu-btn @click="joinRoom()">Join Room</u-menu-btn>
     </u-menu-modal>
 
     <div
@@ -234,7 +300,7 @@ export default {
         room.playerCount > 1
       "
       class="start-game-btn"
-      @click="startGame"
+      @click="$store.state.socket.emit('start-game')"
     >
       Start Game
     </button>
@@ -334,6 +400,7 @@ img {
     color: rgb(0, 255, 64);
     font-weight: bold;
     font-size: 1.1em;
+    margin-bottom: 25px;
 
     p {
       margin-left: 3%;

@@ -32,6 +32,13 @@ export default class Player implements PlayerInterface {
     this.socket = socket;
   }
 
+  clearPlayableCards() {
+    this.cards = this.cards.map((c) => {
+      c.playable = false;
+      return c;
+    });
+  }
+
   findPlayableCards(topCard: Card) {
     this.cards.forEach((card) => card.checkIfPlayable(topCard, this.mustStack));
   }

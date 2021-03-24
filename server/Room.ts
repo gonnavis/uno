@@ -15,6 +15,7 @@ interface RoomInterface {
   stack: number;
   winner: Player | null;
   isRoomEmpty: boolean;
+  maxPlayers: number;
 
   addPlayer(player: Player): void;
   removePlayer(player: Player): void;
@@ -24,6 +25,8 @@ interface RoomInterface {
   getNextPlayer(): Player;
   refillDeckFromPile(): void;
 }
+
+// TODO add settings object (stacking, force play, bluffing, draw to play, etc)
 
 export default class Room implements RoomInterface {
   id = "";
@@ -37,9 +40,10 @@ export default class Room implements RoomInterface {
   stack: number = 0;
   winner: Player | null = null;
   isRoomEmpty: boolean = false;
+  maxPlayers: number = 4;
 
-  constructor(host: Player) {
-    this.id = uuid().substr(0, 7);
+  constructor(host: Player, id: string = "") {
+    this.id = id || uuid().substr(0, 7);
     this.host = host;
     this.turn = host;
     this.addPlayer(host);
@@ -186,6 +190,7 @@ export default class Room implements RoomInterface {
   }
 
   nextTurn(skip: boolean = false) {
+    this.turn.clearPlayableCards();
     this.turn = skip ? this.getNextPlayer(1) : this.getNextPlayer();
 
     this.turn.findPlayableCards(this.topCard());
@@ -264,6 +269,7 @@ export default class Room implements RoomInterface {
         directionReversed: this.directionReversed,
         stack: this.stack,
         playerCount: this.players.length,
+        maxPlayers: this.maxPlayers,
         you: {
           ...player,
           count: player.cards.length,

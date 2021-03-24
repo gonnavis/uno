@@ -54,7 +54,7 @@ export default {
   margin-bottom: 20px;
 
   &:last-of-type {
-    margin-bottom: 0px;
+    margin-bottom: 25px;
   }
 
   label {

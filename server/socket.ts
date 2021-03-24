@@ -25,25 +25,41 @@ export default function(socket: Socket) {
     delete players[socket.id];
   });
 
-  socket.on("create-room", (username: string) => {
+  socket.on("create-room", ({ username = "", roomCode = "", maxPlayers = "" }) => {
     if (player.inRoom) return;
+
+    // validate data
+    if (username.length < 2 || username.length > 11) return;
+    if (roomCode && (roomCode.length < 4 || roomCode.length > 12)) return;
+
+    const maxPlayersNum = Number(maxPlayers);
+    if (maxPlayersNum < 2 || maxPlayersNum > 4) return;
 
     player.username = username;
 
     // create room
-    const room = new Room(player);
+    let room;
+    if (roomCode && !rooms[roomCode]) {
+      room = new Room(player, roomCode);
+    } else {
+      room = new Room(player);
+    }
+
+    room.maxPlayers = maxPlayersNum;
+
     rooms[room.id] = room;
   });
 
-  socket.on("join-room", ({ roomId = "", username = "" }) => {
-    if (roomId.length !== 7) return;
+  socket.on("join-room", ({ username = "", roomCode = "" }) => {
+    if (player.inRoom) return;
+
+    // validate data
+    if (username.length < 2 || username.length > 11) return;
+    if (roomCode.length < 4 || roomCode.length > 12) return;
 
     // get room
-    const room = rooms[roomId];
-    if (!room || room.players.length === 4 || room.started) return;
-
-    const player = players[socket.id];
-    if (player.inRoom) return;
+    const room = rooms[roomCode];
+    if (!room || room.players.length === room.maxPlayers || room.started) return;
 
     player.username = username;
     room.addPlayer(player);
@@ -53,7 +69,7 @@ export default function(socket: Socket) {
     if (!player.inRoom) return;
 
     const room = rooms[player.roomId];
-    if (room.host.id !== player.id || room.players.length === 4) return;
+    if (room.host.id !== player.id || room.players.length === room.maxPlayers) return;
 
     room.addBot(room.createBot());
     room.broadcastState();
