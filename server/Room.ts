@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import { Card, CardType } from "./Card";
+import { Card, CardColor, CardType } from "./Card";
 import Deck from "./Deck";
 import Player from "./Player";
 
@@ -186,7 +186,6 @@ export default class Room implements RoomInterface {
   }
 
   nextTurn(skip: boolean = false) {
-    this.turn.clearPlayableCards();
     this.turn = skip ? this.getNextPlayer(1) : this.getNextPlayer();
 
     this.turn.findPlayableCards(this.topCard());
@@ -219,6 +218,12 @@ export default class Room implements RoomInterface {
   refillDeckFromPile() {
     const cards = this.pile.splice(0, this.pile.length - 1);
     this.deck.cards.push(...cards);
+
+    // clean wildcards
+    this.deck.cards.map((c) => {
+      if (c.type === CardType.Wildcard || c.type === CardType.Plus4) c.color = CardColor.None;
+    });
+
     this.deck.shuffleDeck();
   }
 

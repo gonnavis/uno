@@ -75,7 +75,7 @@ export default {
 
     <div class="pile">
       <Card
-        v-for="(card, i) in room.pile"
+        v-for="(card, i) in room.pile.slice(room.pile.length - 11)"
         :key="`${i}-pile-${card.color}${card.number}${card.type}`"
         :color="card.color"
         :number="card.number"
