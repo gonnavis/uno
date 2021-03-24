@@ -1,13 +1,18 @@
 <script>
 import UMenuCard from "@/components/Menu/UMenuCard.vue";
+import UMenuModal from "@/components/Menu/UMenuModal.vue";
+import UMenuInput from "@/components/Menu/UMenuInput.vue";
+import UMenuBtn from "@/components/Menu/UMenuBtn.vue";
 
 export default {
-  components: { UMenuCard },
+  components: { UMenuCard, UMenuModal, UMenuInput, UMenuBtn },
   name: "Home",
   data() {
     return {
       isMounted: false,
-      username: "Freddie",
+      username: "",
+      roomCode: "",
+      maxPlayers: "4",
       optionsWidth: 0,
       showCreateRoomModal: false,
       currentLevel: "main",
@@ -32,18 +37,7 @@ export default {
           },
         ],
         soloTitle: "Solo Game",
-        solo: [
-          {
-            action: "You",
-            alwaysShowAction: true,
-            graphic: require("@/assets/solo.jpg"),
-          },
-          {
-            action: "Add Bot",
-            graphic: require("@/assets/plus.jpg"),
-            func: () => this.addBot(),
-          },
-        ],
+        solo: [],
         onlineTitle: "Online Games",
         online: [
           {
@@ -56,6 +50,8 @@ export default {
             func: () => (this.showCreateRoomModal = true),
           },
         ],
+        onlineRoomTitle: "Online Room",
+        onlineRoom: [],
         settingsTitle: "Settings",
         settings: [],
       },
@@ -104,15 +100,15 @@ export default {
         });
       }
 
-      if (this.currentLevel === "solo") {
-        if (solo.length < 4) {
-          solo.push({
-            action: "Add Bot",
-            graphic: require("@/assets/plus.jpg"),
-            func: () => this.addBot(),
-          });
-        }
+      if (solo.length < 4) {
+        solo.push({
+          action: "Add Bot",
+          graphic: require("@/assets/plus.jpg"),
+          func: () => this.addBot(),
+        });
+      }
 
+      if (this.currentLevel === "solo") {
         this.options.solo = solo;
       } else {
         this.options.online = solo;
@@ -121,10 +117,7 @@ export default {
   },
   methods: {
     createRoom() {
-      if (this.username.length < 1 || this.username.length > 11) return;
-
-      localStorage.setItem("username", this.username);
-      this.$store.state.socket.emit("create-room", this.username);
+      this.$store.state.socket.emit("create-room", this.username || "You");
     },
     createRoomSolo() {
       this.createRoom();
@@ -179,31 +172,41 @@ export default {
       <h1 class="title">{{ options[currentLevel + "Title"] }}</h1>
     </header>
 
-    <!-- <div class="container">
-      <label for="username">Username*</label>
-      <div class="input username-input">
-        <input
-          v-model="username"
-          type="text"
-          name="username"
-          minlength="2"
-          maxlength="20"
-          style="width: 100%"
-        />
-      </div>
+    <u-menu-modal
+      v-if="showCreateRoomModal"
+      @close="showCreateRoomModal = false"
+      title="Create Room"
+    >
+      <u-menu-input
+        v-model="username"
+        label="Username (required)"
+        placeholder="Your username..."
+      />
 
-      <form @submit.prevent="joinRoom">
-        <hr style="margin: 22px 0" />
-        <label for="roomCode">Room Code</label>
-        <div class="input">
-          <input v-model="code" type="text" name="roomCode" />
-          <button type="submit">Join</button>
-        </div>
-      </form>
+      <u-menu-input
+        v-model="roomCode"
+        label="Room Code (optional)"
+        placeholder="Custom room code..."
+        type="text"
+      />
 
-      <p style="padding: 8px">Or</p>
-      <button class="create-btn" @click="createRoom">Create Room</button>
-    </div> -->
+      <u-menu-input
+        v-model="maxPlayers"
+        :label="`Max Players (${maxPlayers})`"
+        type="range"
+      />
+
+      <div class="settings"></div>
+
+      <u-menu-btn
+        @click="
+          createRoom();
+          showCreateRoomModal = false;
+        "
+        >Create Room</u-menu-btn
+      >
+    </u-menu-modal>
+
     <div
       ref="options"
       class="options"
@@ -226,7 +229,7 @@ export default {
 
     <button
       v-if="
-        (currentLevel === 'solo' || currentLevel === 'online') &&
+        (currentLevel === 'solo' || currentLevel === 'onlineRoom') &&
         room.isHost &&
         room.playerCount > 1
       "
