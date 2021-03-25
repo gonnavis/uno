@@ -95,6 +95,9 @@ export default {
         },
       });
 
+      this.$refs.card.style.marginLeft = `-${box.width}px`;
+      this.$refs.card.style.opacity = "0";
+
       this.$store.state.socket.emit("play-card", this.index);
     },
     calculateColor() {
@@ -206,7 +209,6 @@ export default {
   box-shadow: 0px 0px 15px 0px #00000073;
   transition: transform 0.3s ease, margin-left 0.2s ease, box-shadow 0.2s ease,
     width 0.2s ease, filter 0.2s ease;
-  transition-delay: 0.2s;
   cursor: pointer;
   pointer-events: none;
 
@@ -254,7 +256,7 @@ export default {
   }
 
   &:hover {
-    transform: translateX(-45px) translateY(-45px) rotate(-5deg) !important;
+    transform: translateX(-20px) translateY(-55px) !important;
     margin-left: 1px;
     box-shadow: 0px 0px 10px 8px #ffe23f, inset 0px 0px 3px 3px #ffe448;
   }
