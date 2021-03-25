@@ -31,7 +31,7 @@ export default {
             action: "Solo Play",
             graphic: require("@/assets/solo.jpg"),
             level: "solo",
-            func: () => this.createRoom(),
+            func: () => this.createRoomSolo(),
           },
           {
             action: "Online Play",
@@ -152,7 +152,7 @@ export default {
       this.$store.state.socket.emit("create-room", this.createRoomForm);
     },
     createRoomSolo() {
-      this.$store.state.socket.emit("create-room", "You");
+      this.$store.state.socket.emit("create-room", { username: "You" });
     },
     joinRoom() {
       // validate form

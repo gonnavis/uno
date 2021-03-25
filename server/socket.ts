@@ -25,7 +25,7 @@ export default function(socket: Socket) {
     delete players[socket.id];
   });
 
-  socket.on("create-room", ({ username = "", roomCode = "", maxPlayers = "" }) => {
+  socket.on("create-room", ({ username = "", roomCode = "", maxPlayers = "4" }) => {
     if (player.inRoom) return;
 
     // validate data
