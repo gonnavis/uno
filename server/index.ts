@@ -8,7 +8,7 @@ const app = express();
 const http = createServer(app);
 const io = new Server(http, {
   cors: {
-    origin: process.env.NODE_ENV === "production" ? "https://scuffeduno.online" : "http://localhost:8080",
+    origin: process.env.NODE_ENV === "production" ? [/\.scuffeduno\.online$/, "https://uno-freddie.netlify.com"] : "http://localhost:8080",
     methods: ["GET", "POST"],
   },
 });
