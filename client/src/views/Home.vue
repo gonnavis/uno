@@ -153,6 +153,9 @@ export default {
           break;
       }
     },
+    backOptions() {
+      this.options[this.currentLevel + "Back"]();
+    },
   },
   mounted() {
     this.isMounted = true;
@@ -169,7 +172,19 @@ export default {
 <template>
   <section class="home">
     <header class="header">
-      <img class="logo" src="@/assets/logo.jpg" alt="Scuffed Uno" />
+      <img
+        v-if="currentLevel === 'main'"
+        class="logo"
+        src="@/assets/logo.jpg"
+        alt="Scuffed Uno"
+      />
+      <img
+        v-else
+        class="logo back"
+        src="@/assets/back.png"
+        alt="Back"
+        @click="backOptions"
+      />
       <h1 class="title">{{ options[currentLevel + "Title"] }}</h1>
     </header>
 
@@ -246,7 +261,7 @@ export default {
         v-for="(option, i) in options[currentLevel]"
         :key="option.action + i"
         :action="option.action"
-        :alwaysShowAction="option.alwaysShowAction ? true : false"
+        :alwaysShowAction="option.alwaysShowAction || $store.state.isMobile"
         :graphic="option.graphic"
         @click.native="
           option.level ? (currentLevel = option.level) : null;
@@ -302,6 +317,11 @@ img {
       height: 100%;
       user-select: none;
       -webkit-user-drag: none;
+
+      &.back {
+        cursor: pointer;
+        transform: translateX(10px);
+      }
     }
 
     .title {

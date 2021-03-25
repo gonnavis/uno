@@ -40,6 +40,7 @@ export default {
   .modal {
     width: 100%;
     max-width: 800px;
+    max-height: 100%;
     padding: 40px;
     background-color: white;
     border-radius: 15px;

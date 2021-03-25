@@ -23,8 +23,14 @@ export default {
           },
         ],
         soloTitle: "Solo Game",
+        soloBack: () => {
+          this.$store.state.socket.emit("leave-room");
+          this.currentLevel = "main";
+        },
         solo: [],
+
         onlineTitle: "Online Games",
+        onlineBack: () => (this.currentLevel = "main"),
         online: [
           {
             action: "Join Room",
@@ -38,8 +44,13 @@ export default {
           },
         ],
         onlineRoomTitle: "Online Room",
+        onlineRoomBack: () => {
+          this.$store.state.socket.emit("leave-room");
+          this.currentLevel = "online";
+        },
         onlineRoom: [],
         settingsTitle: "Settings",
+        settingsBack: () => (this.currentLevel = "main"),
         settings: [],
       },
     };

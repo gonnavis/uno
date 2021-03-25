@@ -3,6 +3,7 @@ import Vuex from "vuex";
 
 Vue.use(Vuex);
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const username = localStorage.getItem("username") || "";
 
 const defaultRoom = {
@@ -23,6 +24,7 @@ const defaultRoom = {
 
 const store = new Vuex.Store({
   state: {
+    isMobile,
     windowWidth: 1920,
     windowHeight: 1080,
     socket: null,
