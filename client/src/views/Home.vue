@@ -4,9 +4,12 @@ import UMenuModal from "@/components/Menu/UMenuModal.vue";
 import UMenuInput from "@/components/Menu/UMenuInput.vue";
 import UMenuBtn from "@/components/Menu/UMenuBtn.vue";
 
+import menuOptions from "@/mixins/menuOptions";
+
 export default {
-  components: { UMenuCard, UMenuModal, UMenuInput, UMenuBtn },
   name: "Home",
+  components: { UMenuCard, UMenuModal, UMenuInput, UMenuBtn },
+  mixins: [menuOptions],
   data() {
     return {
       isMounted: false,
@@ -23,47 +26,6 @@ export default {
       optionsWidth: 0,
       showCreateRoomModal: false,
       showJoinRoomModal: false,
-      currentLevel: "main",
-      options: {
-        mainTitle: "Main Menu",
-        main: [
-          {
-            action: "Solo Play",
-            graphic: require("@/assets/solo.jpg"),
-            level: "solo",
-            func: () => this.createRoomSolo(),
-          },
-          {
-            action: "Online Play",
-            graphic: require("@/assets/online.jpg"),
-            level: "online",
-          },
-          {
-            action: "Settings",
-            graphic: require("@/assets/settings.jpg"),
-            level: "settings",
-          },
-        ],
-        soloTitle: "Solo Game",
-        solo: [],
-        onlineTitle: "Online Games",
-        online: [
-          {
-            action: "Join Room",
-            graphic: require("@/assets/arrow.jpg"),
-            func: () => (this.showJoinRoomModal = true),
-          },
-          {
-            action: "Create Room",
-            graphic: require("@/assets/plus.jpg"),
-            func: () => (this.showCreateRoomModal = true),
-          },
-        ],
-        onlineRoomTitle: "Online Room",
-        onlineRoom: [],
-        settingsTitle: "Settings",
-        settings: [],
-      },
     };
   },
   computed: {
