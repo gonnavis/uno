@@ -20,6 +20,22 @@ export default {
     room() {
       return this.$store.state.room;
     },
+    hideTopCard() {
+      return (
+        this.$store.state.animateCards.findIndex((c) => c.steps !== 0) !== -1
+      );
+    },
+    pile() {
+      let pile;
+
+      if (this.room.pile.length > 12) {
+        pile = this.room.pile.slice(this.room.pile.length - 12);
+      } else {
+        pile = this.room.pile;
+      }
+
+      return this.hideTopCard ? pile.slice(0, pile.length - 1) : pile;
+    },
   },
   watch: {
     wildcardColor(color) {
@@ -31,9 +47,55 @@ export default {
       this.wildcardColor = null;
       this.wildcardIndex = -1;
     },
-    room() {
-      if (this.room.you.count === 2 && this.hasCalledUnoClient)
+    room(room, oldRoom) {
+      if (room.you.count === 2 && this.hasCalledUnoClient)
         this.hasCalledUnoClient = false;
+
+      // player playing card animation
+      const index = this.$store.state.animateCards.findIndex((c) => c.player);
+      if (index !== -1 && oldRoom.pile.length !== room.pile.length) {
+        const card = this.$store.state.animateCards[index];
+        card.steps--;
+
+        if (card.steps === 0) {
+          this.$store.commit("REMOVE_ANIMATE_CARD", index);
+        }
+      }
+
+      // other players playing card animations
+      const others = ["right", "top", "left"];
+      for (let i = 0; i < others.length; i++) {
+        const other = others[i];
+
+        if (room[other] && room[other].count < oldRoom[other].count) {
+          const card = room.pile[room.pile.length - 1];
+          const cardElement = document.querySelector(
+            `.cards.other.${other} :nth-of-type(${Math.ceil(
+              Math.random() * room[other].count
+            )})`
+          );
+          if (!cardElement) break;
+
+          const box = cardElement.getBoundingClientRect();
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+
+          this.$store.commit("ADD_ANIMATE_CARD", {
+            ...card,
+            steps: 1,
+            start: {
+              x: box.x,
+              y: box.y,
+            },
+            dest: {
+              x: centerX - box.width / 2 - 50,
+              y: centerY - box.height / 2 - 25,
+            },
+            transform:
+              "rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg) scale(0.75)",
+          });
+        }
+      }
     },
   },
   methods: {
@@ -46,6 +108,10 @@ export default {
           alert(`Sorry we couldn't copy the link to the clipboard: ${err}`)
         );
     },
+  },
+  mounted() {
+    window.onblur = () => (this.$store.state.animateCards = []);
+    window.onfocus = () => (this.$store.state.animateCards = []);
   },
 };
 </script>
@@ -73,9 +139,24 @@ export default {
       </div>
     </div>
 
+    <div class="animation-cards">
+      <Card
+        v-for="(card, i) in $store.state.animateCards"
+        :key="`${i}-animate-${card.color}${card.number}${card.type}`"
+        :index="i"
+        :color="card.color"
+        :number="card.number"
+        :type="card.type"
+        :start="card.start"
+        :dest="card.dest"
+        :transform="card.transform"
+        animate
+      />
+    </div>
+
     <div class="pile">
       <Card
-        v-for="(card, i) in room.pile.slice(room.pile.length - 11)"
+        v-for="(card, i) in pile"
         :key="`${i}-pile-${card.color}${card.number}${card.type}`"
         :color="card.color"
         :number="card.number"
@@ -251,6 +332,12 @@ $table-rotatex: 58deg;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+.animation-cards {
+  * {
+    position: absolute;
+  }
 }
 
 .winner {

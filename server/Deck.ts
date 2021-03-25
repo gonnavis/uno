@@ -29,7 +29,7 @@ export default class Deck {
       }
 
       // create 2 of each plus 2, reverse, skip
-      for (let type: CardType = CardType.Plus2; type <= CardType.Skip; type++) {
+      for (let type: CardType = CardType.Plus2; type <= CardType.Reverse; type++) {
         this.cards.push(new Card(-1, color, type));
         this.cards.push(new Card(-1, color, type));
       }

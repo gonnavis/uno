@@ -27,6 +27,7 @@ const store = new Vuex.Store({
     windowHeight: 1080,
     socket: null,
     username,
+    animateCards: [],
     room: { ...defaultRoom },
   },
   mutations: {
@@ -45,6 +46,14 @@ const store = new Vuex.Store({
     SET_WINDOW_DIMENSIONS(state, { width, height }) {
       state.windowWidth = width;
       state.windowHeight = height;
+    },
+    ADD_ANIMATE_CARD(state, card) {
+      state.animateCards = [...state.animateCards, card];
+    },
+    REMOVE_ANIMATE_CARD(state, index) {
+      const cards = [...state.animateCards];
+      cards.splice(index, 1);
+      state.animateCards = cards;
     },
   },
   actions: {},

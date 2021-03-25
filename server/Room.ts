@@ -197,6 +197,8 @@ export default class Room implements RoomInterface {
     this.checkForWinner();
     this.broadcastState();
 
+    if (this.winner) return;
+
     if (this.turn.bot) {
       this.turn.botPlay(this);
     }
@@ -206,7 +208,7 @@ export default class Room implements RoomInterface {
     let i = this.players.findIndex((p) => p.id === this.turn.id);
 
     if (this.directionReversed) {
-      i -= 1 - offset;
+      i -= 1 + offset;
       if (i < 0) i = this.players.length + i;
     } else {
       i += 1 + offset;

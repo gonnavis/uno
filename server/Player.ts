@@ -44,23 +44,25 @@ export default class Player implements PlayerInterface {
   }
 
   botPlay(room: Room) {
-    while (this.cards.findIndex((c) => c.playable) === -1) {
-      room.giveCards(this, 1, true);
-    }
-    const playableCards = this.cards.filter((c) => c.playable);
+    setTimeout(() => {
+      while (this.cards.findIndex((c) => c.playable) === -1) {
+        room.giveCards(this, 1, true);
+      }
+      const playableCards = this.cards.filter((c) => c.playable);
 
-    const card = playableCards[Math.floor(Math.random() * playableCards.length)];
-    if (card.type === CardType.Plus4 || card.type === CardType.Wildcard) {
-      card.color = Math.floor(Math.random() * 4);
-    }
+      const card = playableCards[Math.floor(Math.random() * playableCards.length)];
+      if (card.type === CardType.Plus4 || card.type === CardType.Wildcard) {
+        card.color = Math.floor(Math.random() * 4);
+      }
 
-    if (this.cards.length === 2 && Math.random() > 0.3) {
-      this.hasCalledUno = true;
-    }
+      if (this.cards.length === 2 && Math.random() > 0.3) {
+        this.hasCalledUno = true;
+      }
 
-    room.playCard(
-      this,
-      this.cards.findIndex((c) => c === card)
-    );
+      room.playCard(
+        this,
+        this.cards.findIndex((c) => c === card)
+      );
+    }, 1500);
   }
 }

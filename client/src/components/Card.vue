@@ -39,15 +39,61 @@ export default {
       type: Boolean,
       default: false,
     },
+    animate: {
+      type: Boolean,
+      default: false,
+    },
+    start: {
+      type: Object,
+      default() {
+        return {
+          x: 0,
+          y: 0,
+        };
+      },
+    },
+    dest: {
+      type: Object,
+      default() {
+        return {
+          x: 0,
+          y: 0,
+        };
+      },
+    },
+    transform: {
+      type: String,
+      default: "",
+    },
   },
   methods: {
-    handleClick() {
+    handleClick(e) {
       if (this.back || this.index === null || !this.playable) return;
 
       // let user pick color of plus 4 or wildcard
       if (this.type === 4 || this.type === 5) {
         this.$emit("pick-color", this.index);
       }
+
+      const box = e.target.getBoundingClientRect();
+      const centerX = window.innerWidth / 2 - 30;
+      const centerY = window.innerHeight / 2;
+
+      this.$store.commit("ADD_ANIMATE_CARD", {
+        type: this.type,
+        color: this.color,
+        number: this.number,
+        player: true,
+        steps: 2,
+        start: {
+          x: box.x,
+          y: box.y,
+        },
+        dest: {
+          x: centerX - box.width / 2,
+          y: centerY - box.height / 2,
+        },
+      });
 
       this.$store.state.socket.emit("play-card", this.index);
     },
@@ -90,6 +136,9 @@ export default {
           } else this.bgX = 0;
       }
     },
+    calculateRotate() {
+      return (this.color + this.type + this.number) * 30;
+    },
   },
   mounted() {
     if (this.back) {
@@ -102,7 +151,32 @@ export default {
     }
 
     if (this.pile) {
-      this.rotate = Math.floor(Math.random() * 360);
+      this.rotate = this.calculateRotate();
+    }
+
+    if (this.animate) {
+      this.$refs.card.style.left = `${this.dest.x}px`;
+      this.$refs.card.style.top = `${this.dest.y}px`;
+      this.$refs.card.style.transform = `translate(${
+        this.start.x - this.dest.x
+      }px, ${this.start.y - this.dest.y}px) ${this.transform}`;
+
+      window.requestAnimationFrame(() => {
+        if (!this.$refs.card) return;
+        this.$refs.card.style.transform = `rotateX(55deg) rotate(${this.calculateRotate()}deg)`;
+
+        this.$refs.card.ontransitionend = () => {
+          const card = this.$store.state.animateCards[this.index];
+          if (!card) return;
+
+          card.steps--;
+
+          if (card.steps === 0) {
+            this.$refs.card.ontransitionend = undefined;
+            this.$store.commit("REMOVE_ANIMATE_CARD", this.index);
+          }
+        };
+      });
     }
   },
 };
@@ -110,8 +184,9 @@ export default {
 
 <template>
   <div
+    ref="card"
     class="card"
-    :class="{ playable }"
+    :class="{ playable, animate }"
     :style="{
       backgroundPositionY: -bgY + 'px',
       backgroundPositionX: -bgX + 'px',
@@ -134,6 +209,12 @@ export default {
   transition-delay: 0.2s;
   cursor: pointer;
   pointer-events: none;
+
+  &.animate {
+    transition-delay: 0s;
+    margin: 0 !important;
+    z-index: 50;
+  }
 
   &.playable {
     transform: translateX(-15px) translateY(-15px) rotate(-4deg) !important;
@@ -186,10 +267,6 @@ export default {
       margin-left: 0;
       box-shadow: 0px 0px 15px 0px #00000073;
     }
-  }
-
-  &.animate {
-    margin-left: -127px !important;
   }
 }
 </style>
