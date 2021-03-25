@@ -16,7 +16,7 @@ export default function(socket: Socket) {
     const room = rooms[player.roomId];
     room.removePlayer(player);
 
-    if (room.isRoomEmpty) delete rooms[player.roomId];
+    if (room.isRoomEmpty) delete rooms[room.id];
   };
 
   socket.on("disconnect", () => {
