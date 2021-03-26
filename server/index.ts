@@ -11,7 +11,7 @@ const io = new Server(http, {
     origin:
       process.env.NODE_ENV === "production"
         ? ["https://scuffeduno.online", "https://uno-freddie.netlify.app"]
-        : "http://localhost:8080",
+        : "*",
     methods: ["GET", "POST"],
   },
 });

@@ -401,10 +401,13 @@ $table-rotatex: 58deg;
     }
 
     .stack {
-      transform: scale(0.52);
       transform-origin: bottom left;
       margin-left: -30px;
       margin-bottom: -10px;
+
+      .card:not(:first-of-type) {
+        margin-top: -98.5px !important;
+      }
     }
   }
 
@@ -716,11 +719,12 @@ $table-rotatex: 58deg;
   position: absolute;
 
   @media screen and (max-width: $mobile) {
-    transform: scale(0.4) rotateX($table-rotatex);
+    transform: rotateX($table-rotatex);
   }
 
   .card {
     position: absolute;
+    margin-left: 0 !important;
   }
 }
 
@@ -742,8 +746,6 @@ $table-rotatex: 58deg;
     }
 
     @media screen and (max-width: $mobile) {
-      transform: scale(0.5);
-      transform-origin: bottom center;
       margin-bottom: 30px;
     }
   }
@@ -753,6 +755,12 @@ $table-rotatex: 58deg;
 
     .card {
       margin-left: max(calc(-5.5px * var(--count)), -105px) !important;
+
+      @media screen and (max-width: $mobile) {
+        margin-left: calc(
+          max(calc(-5.5px * var(--count)), -105px) / 2
+        ) !important;
+      }
     }
 
     &.right {
@@ -765,8 +773,6 @@ $table-rotatex: 58deg;
       @media screen and (max-width: $mobile) {
         right: 50px;
         bottom: 46%;
-        transform: rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg)
-          scale(0.4);
       }
     }
 
@@ -780,8 +786,6 @@ $table-rotatex: 58deg;
       @media screen and (max-width: $mobile) {
         left: 50px;
         bottom: 46%;
-        transform: rotate(-15deg) rotateY(-50deg) rotateZ(-5deg) rotateX(20deg)
-          scale(0.4);
       }
 
       .card:first-of-type {
@@ -794,7 +798,6 @@ $table-rotatex: 58deg;
       transform: scale(0.6);
 
       @media screen and (max-width: $mobile) {
-        transform: scale(0.3);
         transform-origin: top center;
         top: 20px;
       }

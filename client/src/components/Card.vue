@@ -66,6 +66,22 @@ export default {
       default: "",
     },
   },
+  computed: {
+    windowWidth() {
+      return this.$store.state.windowWidth;
+    },
+  },
+  watch: {
+    windowWidth(width, oldWidth) {
+      if (width <= 900 && oldWidth > 900) {
+        this.bgX /= 2;
+        this.bgY /= 2;
+      } else if (oldWidth <= 900 && width > 900) {
+        this.bgX *= 2;
+        this.bgY *= 2;
+      }
+    },
+  },
   methods: {
     handleClick(e) {
       if (this.back || this.index === null || !this.playable) return;
@@ -153,6 +169,11 @@ export default {
       this.calculateType();
     }
 
+    if (this.windowWidth <= 900) {
+      this.bgX /= 2;
+      this.bgY /= 2;
+    }
+
     if (this.pile) {
       this.rotate = this.calculateRotate();
     }
@@ -179,6 +200,13 @@ export default {
             this.$store.commit("REMOVE_ANIMATE_CARD", this.index);
           }
         };
+
+        // if after 3s card isnt removed then remove it manually
+        setTimeout(() => {
+          if (this.$refs.card && this.$refs.card.ontransitionend) {
+            this.$store.commit("REMOVE_ANIMATE_CARD", this.index);
+          }
+        }, 3000);
       });
     }
   },
@@ -211,6 +239,12 @@ export default {
     width 0.2s ease, filter 0.2s ease;
   cursor: pointer;
   pointer-events: none;
+
+  @media screen and (max-width: 900px) {
+    width: 63.5px;
+    height: 98.5px;
+    border-radius: 9px;
+  }
 
   &.animate {
     transition-delay: 0s;
