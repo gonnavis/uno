@@ -88,8 +88,8 @@ export default {
               y: box.y,
             },
             dest: {
-              x: centerX - box.width / 2 - 50,
-              y: centerY - box.height / 2 - 25,
+              x: centerX - box.width / 2 - 25,
+              y: centerY - box.height / 2 - 30,
             },
             transform:
               "rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg) scale(0.75)",
@@ -743,6 +743,10 @@ $table-rotatex: 58deg;
   &.you {
     .card {
       margin-left: max(calc(-4.5px * var(--count)), -90px);
+
+      @media screen and (max-width: $mobile) {
+        margin-left: max(calc(-2.25px * var(--count)), -45px);
+      }
     }
 
     @media screen and (max-width: $mobile) {
@@ -757,9 +761,7 @@ $table-rotatex: 58deg;
       margin-left: max(calc(-5.5px * var(--count)), -105px) !important;
 
       @media screen and (max-width: $mobile) {
-        margin-left: calc(
-          max(calc(-5.5px * var(--count)), -105px) / 2
-        ) !important;
+        margin-left: max(calc(-2.75px * var(--count)), -52.5px) !important;
       }
     }
 

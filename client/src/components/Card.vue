@@ -92,7 +92,7 @@ export default {
       }
 
       const box = e.target.getBoundingClientRect();
-      const centerX = window.innerWidth / 2 - 30;
+      const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
 
       this.$store.commit("ADD_ANIMATE_CARD", {
@@ -106,8 +106,8 @@ export default {
           y: box.y,
         },
         dest: {
-          x: centerX - box.width / 2,
-          y: centerY - box.height / 2,
+          x: centerX - box.width / 2 - 5,
+          y: centerY - box.height / 2 - 13,
         },
       });
 
@@ -201,12 +201,12 @@ export default {
           }
         };
 
-        // if after 3s card isnt removed then remove it manually
+        // if after 300ms card isnt removed then remove it manually
         setTimeout(() => {
           if (this.$refs.card && this.$refs.card.ontransitionend) {
             this.$store.commit("REMOVE_ANIMATE_CARD", this.index);
           }
-        }, 3000);
+        }, 200);
       });
     }
   },
@@ -248,6 +248,7 @@ export default {
 
   &.animate {
     transition-delay: 0s;
+    transition: transform 0.2s linear;
     margin: 0 !important;
     z-index: 50;
   }
