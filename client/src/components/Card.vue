@@ -201,7 +201,7 @@ export default {
           }
         };
 
-        // if after 300ms card isnt removed then remove it manually
+        // if after 200ms card isnt removed then remove it manually
         setTimeout(() => {
           if (this.$refs.card && this.$refs.card.ontransitionend) {
             this.$store.commit("REMOVE_ANIMATE_CARD", this.index);

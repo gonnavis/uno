@@ -1,10 +1,12 @@
 <script>
 import Card from "@/components/Card.vue";
+import UMenuModal from "@/components/Menu/UMenuModal.vue";
 
 export default {
   name: "Game",
   components: {
     Card,
+    UMenuModal,
   },
   data() {
     return {
@@ -99,6 +101,11 @@ export default {
     },
   },
   methods: {
+    leaveRoom() {
+      this.$store.state.socket.emit("leave-room");
+      this.$store.commit("RESET_ROOM");
+      this.$router.push({ name: "Home" });
+    },
     copyJoinRoomLink() {
       const link = `${window.location.origin}/game?room=${this.room.id}`;
       window.navigator.clipboard
@@ -118,17 +125,12 @@ export default {
 
 <template>
   <div class="game">
-    <div v-if="room.winner" class="winner">
-      <div class="card">
-        <h1>
-          Congratulations to {{ room.winner.username }} on winning the game!
-        </h1>
-
-        <button class="btn rounded-btn" @click="resetGame(true)">
-          Main Menu
-        </button>
-      </div>
-    </div>
+    <u-menu-modal
+      v-if="room.winner"
+      :title="`Congratulations to ${room.winner.username} on winning the game!`"
+    >
+      <button class="btn rounded-btn" @click="leaveGame">Main Menu</button>
+    </u-menu-modal>
 
     <div v-if="pickColor" class="color-picker">
       <div class="container">
@@ -304,17 +306,7 @@ export default {
 
         <p class="players">Players: {{ room.playerCount }} / 4</p>
 
-        <button
-          class="rounded-btn btn"
-          @click="
-            () => {
-              $store.state.socket.emit('leave-room');
-              $store.commit('RESET_ROOM');
-            }
-          "
-        >
-          Leave Game
-        </button>
+        <button class="rounded-btn btn" @click="leaveRoom">Leave Game</button>
       </div>
     </div>
   </div>
@@ -337,36 +329,6 @@ $table-rotatex: 58deg;
 .animation-cards {
   * {
     position: absolute;
-  }
-}
-
-.winner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-
-  .card {
-    margin: auto;
-    background-color: white;
-    padding: 35px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-
-    h1 {
-      font-size: 2rem;
-      font-weight: bold;
-    }
-
-    .btn {
-      margin-top: 10px;
-    }
   }
 }
 
