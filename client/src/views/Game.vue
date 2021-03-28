@@ -108,8 +108,14 @@ export default {
     },
   },
   mounted() {
+    if (!this.room.id) return this.$router.push({ name: "Home" });
+
     window.onblur = () => (this.$store.state.animateCards = []);
     window.onfocus = () => (this.$store.state.animateCards = []);
+  },
+  destroyed() {
+    window.onblur = null;
+    window.onfocus = null;
   },
 };
 </script>

@@ -36,10 +36,6 @@ export default {
       }
     },
   },
-  mounted() {
-    if (this.route === "Game" && !this.room.id)
-      this.$router.push({ name: "Home" });
-  },
 };
 </script>
 
