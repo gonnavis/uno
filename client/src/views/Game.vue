@@ -120,7 +120,7 @@ export default {
       v-if="room.winner"
       :title="`Congratulations to ${room.winner.username} on winning the game!`"
     >
-      <button class="btn rounded-btn" @click="leaveGame">Main Menu</button>
+      <button class="btn rounded-btn" @click="leaveRoom">Main Menu</button>
     </u-menu-modal>
 
     <div v-if="pickColor" class="color-picker">

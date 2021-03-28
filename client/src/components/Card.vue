@@ -201,9 +201,13 @@ export default {
           }
         };
 
-        // if after 200ms card isnt removed then remove it manually
+        // if after 200ms card isnt removed then remove it manually (exclude player's cards)
         setTimeout(() => {
-          if (this.$refs.card && this.$refs.card.ontransitionend) {
+          if (
+            this.$refs.card &&
+            this.$refs.card.ontransitionend &&
+            !this.$store.state.animateCards[this.index].player
+          ) {
             this.$store.commit("REMOVE_ANIMATE_CARD", this.index);
           }
         }, 200);
