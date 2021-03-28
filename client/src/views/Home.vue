@@ -6,6 +6,8 @@ import UMenuBtn from "@/components/Menu/UMenuBtn.vue";
 
 import menuOptions from "@/mixins/menuOptions";
 
+let observer;
+
 export default {
   name: "Home",
   components: { UMenuCard, UMenuModal, UMenuInput, UMenuBtn },
@@ -156,15 +158,32 @@ export default {
     backOptions() {
       this.options[this.currentLevel + "Back"]();
     },
+    copyJoinRoomLink() {
+      const link = `${window.location.origin}/?room=${this.room.id}`;
+      window.navigator.clipboard
+        .writeText(link)
+        .then(() => alert("Copied!"))
+        .catch((err) =>
+          alert(`Sorry we couldn't copy the link to the clipboard: ${err}`)
+        );
+    },
   },
   mounted() {
     this.isMounted = true;
 
-    const observer = new ResizeObserver(() => {
+    observer = new ResizeObserver(() => {
       this.optionsWidth = this.$refs.options.clientWidth;
     });
-
     observer.observe(this.$refs.options);
+
+    const roomCode = this.$route.query.room;
+    if (roomCode) {
+      this.joinRoomForm.roomCode = roomCode;
+      this.showJoinRoomModal = true;
+    }
+  },
+  destroyed() {
+    observer.disconnect();
   },
 };
 </script>
@@ -186,6 +205,24 @@ export default {
         @click="backOptions"
       />
       <h1 class="title">{{ options[currentLevel + "Title"] }}</h1>
+
+      <div
+        v-if="currentLevel === 'solo' || currentLevel === 'onlineRoom'"
+        class="room-info"
+      >
+        <p class="code" v-if="currentLevel === 'onlineRoom'">
+          Room Code: <span>{{ room.id }}</span>
+          <button class="copy" @click="copyJoinRoomLink">Copy Link</button>
+        </p>
+
+        <u-menu-btn
+          v-if="room.isHost && room.playerCount > 1"
+          class="start-game-btn"
+          @click="$store.state.socket.emit('start-game')"
+        >
+          Start Game
+        </u-menu-btn>
+      </div>
     </header>
 
     <u-menu-modal
@@ -269,18 +306,6 @@ export default {
         "
       />
     </div>
-
-    <button
-      v-if="
-        (currentLevel === 'solo' || currentLevel === 'onlineRoom') &&
-        room.isHost &&
-        room.playerCount > 1
-      "
-      class="start-game-btn"
-      @click="$store.state.socket.emit('start-game')"
-    >
-      Start Game
-    </button>
   </section>
 </template>
 
@@ -305,7 +330,7 @@ img {
 
   .header {
     width: 100%;
-    height: calc(min(15%, 120px));
+    height: MIN(18%, 120px);
     display: flex;
     align-items: center;
     position: absolute;
@@ -335,6 +360,10 @@ img {
     margin: auto;
     display: flex;
 
+    @media screen and (max-width: $mobile) {
+      padding-top: 65px;
+    }
+
     * {
       margin-right: -100px;
 
@@ -352,22 +381,44 @@ img {
     }
   }
 
-  .start-game-btn {
-    padding: 15px 25px;
-    font-size: 2rem;
-    position: absolute;
-    bottom: 3vh;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    background-color: #ff520d;
-    border: 4px solid white;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
+  .room-info {
+    margin-left: auto;
+    margin-right: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
 
-    &:hover {
-      background-color: #e72300;
+    .code {
+      font-size: CLAMP(1.1rem, 2.5vw, 1.5rem);
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.6);
+      padding: 4px 0;
+
+      span {
+        color: #fff;
+      }
+
+      .copy {
+        text-decoration: underline;
+        font-weight: bold;
+        margin-left: MIN(1vw, 12px);
+        color: #53a944;
+        outline: none;
+        transition: color 0.2s ease;
+
+        &:hover,
+        &:focus {
+          color: #50ff31;
+        }
+      }
+    }
+
+    .start-game-btn {
+      font-size: CLAMP(1.2rem, 3vw, 1.8rem);
+      border: 4px solid white;
+      padding: 0 3vw;
+      height: 85%;
     }
   }
 

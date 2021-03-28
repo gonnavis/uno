@@ -45,6 +45,8 @@ export default class Player implements PlayerInterface {
 
   botPlay(room: Room) {
     setTimeout(() => {
+      if (!this.cards) return;
+
       while (this.cards.findIndex((c) => c.playable) === -1) {
         room.giveCards(this, 1, true);
       }

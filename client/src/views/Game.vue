@@ -106,15 +106,6 @@ export default {
       this.$store.commit("RESET_ROOM");
       this.$router.push({ name: "Home" });
     },
-    copyJoinRoomLink() {
-      const link = `${window.location.origin}/game?room=${this.room.id}`;
-      window.navigator.clipboard
-        .writeText(link)
-        .then(() => alert("Copied!"))
-        .catch((err) =>
-          alert(`Sorry we couldn't copy the link to the clipboard: ${err}`)
-        );
-    },
   },
   mounted() {
     window.onblur = () => (this.$store.state.animateCards = []);
@@ -291,23 +282,6 @@ export default {
       >
         Call Uno
       </button>
-
-      <div class="top-left-text">
-        <p class="room">
-          Room Code: <span>{{ room.id }}</span>
-          <button
-            class="copy"
-            style="margin-top: 0px"
-            @click="copyJoinRoomLink"
-          >
-            Copy Link
-          </button>
-        </p>
-
-        <p class="players">Players: {{ room.playerCount }} / 4</p>
-
-        <button class="rounded-btn btn" @click="leaveRoom">Leave Game</button>
-      </div>
     </div>
   </div>
 </template>
@@ -389,37 +363,6 @@ $table-rotatex: 58deg;
       transform: scale(0.7);
       bottom: 30px;
       right: 30px;
-    }
-  }
-
-  .top-left-text {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    color: white;
-    font-weight: bold;
-    font-size: 1.2rem;
-
-    .btn {
-      padding: 5px 10px;
-      font-size: 1rem;
-      margin-top: 10px;
-    }
-
-    .room {
-      .copy {
-        text-decoration: underline;
-        font-weight: bold;
-        margin-left: 12px;
-        color: #53a944;
-        outline: none;
-        transition: color 0.2s ease;
-
-        &:hover,
-        &:focus {
-          color: #50ff31;
-        }
-      }
     }
   }
 
