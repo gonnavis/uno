@@ -4,7 +4,6 @@ import Vuex from "vuex";
 Vue.use(Vuex);
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-const username = localStorage.getItem("username") || "";
 
 const defaultRoom = {
   id: "",
@@ -28,7 +27,6 @@ const store = new Vuex.Store({
     windowWidth: 1920,
     windowHeight: 1080,
     socket: null,
-    username,
     animateCards: [],
     room: { ...defaultRoom },
   },
@@ -41,9 +39,6 @@ const store = new Vuex.Store({
     },
     RESET_ROOM(state) {
       state.room = { ...defaultRoom };
-    },
-    SET_USERNAME(state, username) {
-      state.username = username;
     },
     SET_WINDOW_DIMENSIONS(state, { width, height }) {
       state.windowWidth = width;
