@@ -23,20 +23,47 @@ export default {
       return this.$store.state.room;
     },
     hideTopCard() {
-      return (
-        this.$store.state.animateCards.findIndex((c) => c.steps !== 0) !== -1
-      );
+      let hide = false;
+      const animateCards = this.$store.state.animateCards;
+
+      const playerCardIndex = animateCards.findIndex((c) => c.player);
+      if (playerCardIndex !== -1) {
+        const card = animateCards[playerCardIndex];
+        if (!card.isTransitionComplete && card.steps !== 0) {
+          hide = true;
+        }
+      } else if (
+        animateCards.findIndex((c) => c.steps !== 0 && c.other) !== -1
+      ) {
+        hide = true;
+      }
+
+      return hide;
     },
     pile() {
       let pile;
+      const limit = this.$store.state.isMobile ? 5 : 12;
 
-      if (this.room.pile.length > 12) {
-        pile = this.room.pile.slice(this.room.pile.length - 12);
+      if (this.room.pile.length > limit) {
+        pile = this.room.pile.slice(this.room.pile.length - limit);
       } else {
         pile = this.room.pile;
       }
 
       return this.hideTopCard ? pile.slice(0, pile.length - 1) : pile;
+    },
+    playableCardCount() {
+      if (!this.room.you.cards) return null;
+
+      const count = this.room.you.cards.reduce(
+        (total, c) => total + c.playable,
+        0
+      );
+
+      return count;
+    },
+    isTurn() {
+      return this.room.turn === this.room.you.id;
     },
   },
   watch: {
@@ -85,6 +112,8 @@ export default {
           this.$store.commit("ADD_ANIMATE_CARD", {
             ...card,
             steps: 1,
+            other: true,
+            isTransitionComplete: false,
             start: {
               x: box.x,
               y: box.y,
@@ -195,29 +224,9 @@ export default {
 
     <div class="hud">
       <div
-        v-if="room.you"
-        class="cards you"
-        :style="{ '--count': `${room.you.count}` }"
-      >
-        <Card
-          v-for="(card, i) in room.you.cards"
-          :key="`${i}-you-${card.color}${card.number}${card.type}`"
-          :index="i"
-          :color="card.color"
-          :number="card.number"
-          :type="card.type"
-          :playable="card.playable"
-          @pick-color="
-            pickColor = true;
-            wildcardIndex = $event;
-          "
-        />
-      </div>
-
-      <div
         class="stack"
         @click="
-          room.started && room.turn === room.you.id && !drawing
+          room.started && isTurn && !drawing
             ? $store.state.socket.emit('draw-card')
             : null
         "
@@ -228,16 +237,36 @@ export default {
         <Card back />
         <Card back />
         <Card back />
-        <!-- // TODO highlight when player has no playable cards -->
-        <Card back :class="{ draw: false }" />
-        <Card back ref="topCard" />
+        <Card back :class="{ draw: playableCardCount === 0 && isTurn }" />
+        <Card back />
+      </div>
+
+      <div
+        v-if="room.you"
+        class="cards you"
+        :class="{ turn: isTurn }"
+        :style="{ '--count': `${room.you.count}` }"
+      >
+        <Card
+          v-for="(card, i) in room.you.cards"
+          :key="`${i}-you-${card.color}${card.number}${card.type}`"
+          :index="i"
+          :color="card.color"
+          :number="card.number"
+          :type="card.type"
+          :playable="card.playable && isTurn"
+          @pick-color="
+            pickColor = true;
+            wildcardIndex = $event;
+          "
+        />
       </div>
 
       <!-- Player display cards -->
       <div
         v-if="room.you && room.started"
         class="player-card you"
-        :class="{ playing: room.turn === room.you.id }"
+        :class="{ playing: isTurn }"
       >
         {{ room.you.username }} : {{ room.you.count }}
       </div>
@@ -276,9 +305,10 @@ export default {
           room.you &&
           room.you.cards &&
           room.you.cards.length === 2 &&
-          room.turn === room.you.id &&
+          isTurn &&
           !room.you.hasCalledUno &&
-          !hasCalledUnoClient
+          !hasCalledUnoClient &&
+          playableCardCount !== 0
         "
         class="uno-btn rounded-btn"
         @click="
@@ -420,7 +450,7 @@ $table-rotatex: 58deg;
     }
 
     &.you {
-      left: 45%;
+      left: 45.5%;
       bottom: 15px;
       filter: brightness(0.6);
 
@@ -436,45 +466,80 @@ $table-rotatex: 58deg;
 }
 
 .color-picker {
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.3);
+  width: 100vw;
+  height: 100vh;
   position: absolute;
   z-index: 1000;
   display: flex;
 
   .container {
-    width: 60%;
-    height: 60%;
-    background-color: white;
+    $transform: rotateX($table-rotatex) translateY(-60px);
+    transform: $transform;
+    width: MAX(38vw, 350px);
+    height: MAX(MIN(38vw, 75vh), 350px);
     border-radius: 20px;
     margin: auto;
     padding: 20px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    grid-gap: 15px;
+    grid-gap: 10px;
+    animation: enlarge 9s ease-in-out infinite;
+
+    @keyframes enlarge {
+      from {
+        transform: $transform scale(1);
+      }
+
+      50% {
+        transform: $transform scale(1.1);
+      }
+
+      to {
+        transform: $transform scale(1);
+      }
+    }
 
     button {
+      --shadow-color: black;
+      opacity: 0.8;
       border-radius: 10px;
       width: 100%;
       height: 100%;
+      outline: none;
+      box-shadow: 0px 25px 30px 5px var(--shadow-color);
+      transition: opacity 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 35px 40px 10px var(--shadow-color);
+        opacity: 0.9;
+        transform: scale(1.1);
+        z-index: 5;
+      }
     }
 
     .red {
+      border-top-left-radius: 100%;
       background-color: #ff171a;
+      --shadow-color: #ff000479;
     }
 
     .green {
-      background-color: #5db151;
+      border-top-right-radius: 100%;
+      background-color: #41dd2c;
+      --shadow-color: #00ff0d79;
     }
 
     .yellow {
-      background-color: #ffde17;
+      border-bottom-left-radius: 100%;
+      background-color: #ffee00;
+      --shadow-color: #ffe60079;
     }
 
     .blue {
-      background-color: #1388d7;
+      border-bottom-right-radius: 100%;
+      background-color: #00a2ff;
+      --shadow-color: #00c3ff79;
     }
   }
 }
@@ -652,8 +717,22 @@ $table-rotatex: 58deg;
   margin-top: auto;
 
   &.you {
+    transition: transform 0.5s ease, filter 0.5s ease;
+    transform-origin: bottom center;
+    transform: scale(0.8);
+    filter: brightness(0.5);
+
+    &.turn {
+      transform: scale(1);
+      filter: brightness(1);
+    }
+
     .card {
       margin-left: max(calc(-4.5px * var(--count)), -90px);
+
+      &:first-of-type {
+        margin-left: 0;
+      }
 
       @media screen and (max-width: $mobile) {
         margin-left: max(calc(-2.25px * var(--count)), -45px);

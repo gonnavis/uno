@@ -101,6 +101,7 @@ export default {
         number: this.number,
         player: true,
         steps: 2,
+        isTransitionComplete: false,
         start: {
           x: box.x,
           y: box.y,
@@ -194,6 +195,7 @@ export default {
           if (!card) return;
 
           card.steps--;
+          card.isTransitionComplete = true;
 
           if (card.steps === 0) {
             this.$refs.card.ontransitionend = undefined;
