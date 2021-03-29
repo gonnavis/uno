@@ -113,11 +113,11 @@ export default function(socket: Socket) {
   });
 
   socket.on("draw-card", () => {
-    if (!player.inRoom || rooms[player.roomId].turn.id !== player.id) return;
+    if (!player.inRoom || rooms[player.roomId].turn.id !== player.id || !player.canDraw) return;
 
     const room = rooms[player.roomId];
 
-    room.giveCards(player, 1, true);
+    room.drawCards(player);
     room.broadcastState();
   });
 

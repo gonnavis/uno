@@ -12,7 +12,8 @@ interface PlayerInterface {
   cards: Card[];
   mustStack: boolean;
   hasCalledUno: boolean;
-  lastDrawnCard: string;
+  lastDrawnCard: number;
+  canDraw: boolean;
 
   sortCards(): void;
   findPlayableCards(topCard: Card): void;
@@ -28,9 +29,10 @@ export default class Player implements PlayerInterface {
   inRoom = false;
   roomId = "";
   cards: Card[] = [];
-  mustStack: boolean = false;
-  hasCalledUno: boolean = false;
-  lastDrawnCard: string = "";
+  mustStack = false;
+  hasCalledUno = false;
+  lastDrawnCard = -1;
+  canDraw = false;
 
   constructor(socket: Socket | null, bot: boolean = false) {
     this.bot = bot;
@@ -91,12 +93,11 @@ export default class Player implements PlayerInterface {
   }
 
   botPlay(room: Room) {
-    setTimeout(() => {
+    setTimeout(async () => {
       if (!this.cards) return;
 
-      while (this.cards.findIndex((c) => c.playable) === -1) {
-        room.giveCards(this, 1, true);
-      }
+      if (this.cards.findIndex((c) => c.playable) === -1) await room.drawCards(this);
+
       const playableCards = this.cards.filter((c) => c.playable);
 
       const card = playableCards[Math.floor(Math.random() * playableCards.length)];

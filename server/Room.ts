@@ -105,6 +105,7 @@ export default class Room implements RoomInterface {
     const randIndex = Math.floor(Math.random() * this.players.length);
     this.turn = this.players[randIndex];
     this.turn.findPlayableCards(this.topCard());
+    this.turn.canDraw = true;
     if (this.turn.bot) {
       this.turn.botPlay(this);
     }
@@ -114,24 +115,58 @@ export default class Room implements RoomInterface {
     this.broadcastState();
   }
 
-  async giveCards(player: Player, amount: number, broadcastState: boolean = false) {
+  giveCards(player: Player, amount: number): Card[] {
+    let givenCards: Card[] = [];
+
     for (let i = 0; i < amount; i++) {
       if (this.deck.cards.length === 0) {
         this.refillDeckFromPile();
       }
 
-      player.cards.push(this.deck.pickCard());
-
-      if (broadcastState) {
-        player.sortCards();
-
-        this.broadcastState();
-      }
+      const card = this.deck.pickCard();
+      givenCards.push(card);
+      player.cards.push(card);
     }
 
     if (this.turn.id === player.id && this.started) {
       player.findPlayableCards(this.topCard());
     }
+
+    return givenCards;
+  }
+
+  async drawCards(player: Player) {
+    // exit early if player has already drawn cards this turn
+    if (!player.canDraw) return;
+
+    const hasPlayableCard = player.cards.findIndex((c) => c.playable) !== -1;
+
+    const drawn: Card[] = [];
+    let loop = false;
+
+    // check loop conditions
+    if (hasPlayableCard) loop = drawn.findIndex((c) => c.playable) === -1;
+    else loop = player.cards.findIndex((c) => c.playable) === -1;
+
+    while (loop) {
+      drawn.push(...this.giveCards(player, 1));
+
+      player.sortCards();
+
+      // find index of last drawn card in sorted list
+      player.lastDrawnCard = player.cards.findIndex((c) => c.id === drawn[drawn.length - 1].id);
+
+      this.broadcastState();
+
+      // delay drawing
+      await sleep(800);
+
+      // recheck loop conditions every iteration
+      if (hasPlayableCard) loop = drawn.findIndex((c) => c.playable) === -1;
+      else loop = player.cards.findIndex((c) => c.playable) === -1;
+    }
+
+    player.canDraw = false;
   }
 
   playCard(player: Player, cardIndex: number) {
@@ -194,9 +229,12 @@ export default class Room implements RoomInterface {
 
   nextTurn(skip: boolean = false) {
     this.turn.clearPlayableCards();
-    this.turn = skip ? this.getNextPlayer(1) : this.getNextPlayer();
+    this.turn.canDraw = false;
 
+    this.turn = skip ? this.getNextPlayer(1) : this.getNextPlayer();
+    this.turn.canDraw = true;
     this.turn.findPlayableCards(this.topCard());
+
     this.checkForWinner();
     this.broadcastState();
 
