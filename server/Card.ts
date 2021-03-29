@@ -1,3 +1,5 @@
+import { v4 as uuid } from "uuid";
+
 export enum CardColor {
   Red = 0,
   Green,
@@ -16,6 +18,7 @@ export enum CardType {
 }
 
 export class Card {
+  id: string;
   number = 0;
   color: CardColor = 0;
   type: CardType = 0;
@@ -25,6 +28,7 @@ export class Card {
     this.number = number;
     this.color = color;
     this.type = type;
+    this.id = uuid();
   }
 
   checkIfPlayable(topCard: Card, mustStack: boolean) {

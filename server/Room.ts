@@ -98,6 +98,7 @@ export default class Room implements RoomInterface {
     // give players cards
     this.players.forEach((p) => {
       this.giveCards(p, 7);
+      p.sortCards();
     });
 
     // pick player to start
@@ -113,21 +114,23 @@ export default class Room implements RoomInterface {
     this.broadcastState();
   }
 
-  giveCards(player: Player, amount: number, broadcastState: boolean = false) {
+  async giveCards(player: Player, amount: number, broadcastState: boolean = false) {
     for (let i = 0; i < amount; i++) {
       if (this.deck.cards.length === 0) {
         this.refillDeckFromPile();
       }
 
       player.cards.push(this.deck.pickCard());
+
+      if (broadcastState) {
+        player.sortCards();
+
+        this.broadcastState();
+      }
     }
 
     if (this.turn.id === player.id && this.started) {
       player.findPlayableCards(this.topCard());
-    }
-
-    if (broadcastState) {
-      this.broadcastState();
     }
   }
 
@@ -340,4 +343,8 @@ export default class Room implements RoomInterface {
   topCard(): Card {
     return this.pile[this.pile.length - 1];
   }
+}
+
+function sleep(time: number) {
+  return new Promise((resolve) => setTimeout(resolve, time));
 }

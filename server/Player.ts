@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { v4 as uuid } from "uuid";
-import { Card, CardType } from "./Card";
+import { Card, CardColor, CardType } from "./Card";
 import Room from "./Room";
 
 interface PlayerInterface {
@@ -11,8 +11,13 @@ interface PlayerInterface {
   roomId: string;
   cards: Card[];
   mustStack: boolean;
+  hasCalledUno: boolean;
+  lastDrawnCard: string;
 
+  sortCards(): void;
   findPlayableCards(topCard: Card): void;
+  clearPlayableCards(): void;
+  botPlay(room: Room): void;
 }
 export default class Player implements PlayerInterface {
   id = "";
@@ -25,11 +30,53 @@ export default class Player implements PlayerInterface {
   cards: Card[] = [];
   mustStack: boolean = false;
   hasCalledUno: boolean = false;
+  lastDrawnCard: string = "";
 
   constructor(socket: Socket | null, bot: boolean = false) {
     this.bot = bot;
     this.id = uuid();
     this.socket = socket;
+  }
+
+  sortCards() {
+    // order - red, green, blue, yellow, wildcard, plus4
+    // - number 0 - 9, reverse, skip, plus2
+
+    const cardColors: { [index: string]: Card[] } = {
+      Red: [],
+      Green: [],
+      Blue: [],
+      Yellow: [],
+      Wildcard: [],
+      Plus4: [],
+    };
+
+    const newCards: Card[] = [];
+    Object.keys(cardColors).forEach((s: string) => {
+      const color: CardColor = CardColor[s as keyof typeof CardColor];
+
+      this.cards.forEach((c) => {
+        if (c.color === color || c.type === CardType[s as keyof typeof CardType]) cardColors[s].push(c);
+      });
+
+      // sort number cards
+      cardColors[s].sort((c1, c2) => c1.number - c2.number);
+
+      // sort reverse, skip, plus2
+      const specialCards = cardColors[s].filter((c) => c.type !== CardType.None);
+      specialCards.sort((c1, c2) => c2.type - c1.type);
+
+      // remove special cards from array
+      cardColors[s] = cardColors[s].filter((c) => c.type === CardType.None);
+
+      // put special cards at the end
+      cardColors[s].push(...specialCards);
+
+      // merge into total cards
+      newCards.push(...cardColors[s]);
+    });
+
+    this.cards = newCards;
   }
 
   clearPlayableCards() {
