@@ -159,6 +159,9 @@ export default {
     calculateRotate() {
       return (this.color + this.type + this.number) * 30;
     },
+    findAnimateCardsIndex(id) {
+      return this.$store.state.animateCards.findIndex((c) => c.id === id);
+    },
   },
   mounted() {
     if (this.back) {
@@ -188,29 +191,64 @@ export default {
 
       window.requestAnimationFrame(() => {
         if (!this.$refs.card) return;
-        this.$refs.card.style.transform = `rotateX(55deg) rotate(${this.calculateRotate()}deg)`;
+
+        const card = this.$store.state.animateCards[this.index];
+        const id = card.id;
+
+        if (!card.draw)
+          this.$refs.card.style.transform = `rotateX(58deg) rotate(${this.calculateRotate()}deg)`;
+        else if (card.other)
+          this.$refs.card.style.transform = card.endTransform;
+        else this.$refs.card.style.transform = "";
 
         this.$refs.card.ontransitionend = () => {
-          const card = this.$store.state.animateCards[this.index];
+          const card = this.$store.state.animateCards[
+            this.findAnimateCardsIndex(id)
+          ];
           if (!card) return;
 
           card.steps--;
           card.isTransitionComplete = true;
 
           if (card.steps === 0) {
-            this.$refs.card.ontransitionend = undefined;
+            if (this.$refs.card) this.$refs.card.ontransitionend = undefined;
+
+            if (card.draw && card.player)
+              document
+                .querySelector(
+                  `.cards.you :nth-of-type(${
+                    this.$store.state.room.you.lastDrawnCard + 1
+                  })`
+                )
+                .classList.remove("hidden");
+
             this.$store.commit("REMOVE_ANIMATE_CARD", this.index);
           }
         };
 
         // if after 200ms card isnt removed then remove it manually (exclude player's cards)
         setTimeout(() => {
+          const card = this.$store.state.animateCards[
+            this.findAnimateCardsIndex(id)
+          ];
+          if (card && card.draw && card.player)
+            document
+              .querySelector(
+                `.cards.you :nth-of-type(${
+                  this.$store.state.room.you.lastDrawnCard + 1
+                })`
+              )
+              .classList.remove("hidden");
+
           if (
             this.$refs.card &&
             this.$refs.card.ontransitionend &&
-            !this.$store.state.animateCards[this.index].player
+            !card.player
           ) {
-            this.$store.commit("REMOVE_ANIMATE_CARD", this.index);
+            this.$store.commit(
+              "REMOVE_ANIMATE_CARD",
+              this.findAnimateCardsIndex(id)
+            );
           }
         }, 200);
       });
@@ -256,7 +294,7 @@ export default {
     transition-delay: 0s;
     transition: transform 0.2s linear;
     margin: 0 !important;
-    z-index: 50;
+    z-index: 1000;
   }
 
   &.playable {
@@ -290,6 +328,11 @@ export default {
 
   &.hidden {
     opacity: 0;
+    // margin-left: -127px !important;
+
+    // @media screen and (max-width: 900px) {
+    //   margin-left: -63.5px !important;
+    // }
   }
 
   &:not(:first-of-type) {

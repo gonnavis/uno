@@ -26,14 +26,17 @@ export default {
       let hide = false;
       const animateCards = this.$store.state.animateCards;
 
-      const playerCardIndex = animateCards.findIndex((c) => c.player);
+      const playerCardIndex = animateCards.findIndex(
+        (c) => !c.draw && c.player
+      );
       if (playerCardIndex !== -1) {
         const card = animateCards[playerCardIndex];
         if (!card.isTransitionComplete && card.steps !== 0) {
           hide = true;
         }
       } else if (
-        animateCards.findIndex((c) => c.steps !== 0 && c.other) !== -1
+        animateCards.findIndex((c) => c.steps !== 0 && !c.draw && c.other) !==
+        -1
       ) {
         hide = true;
       }
@@ -65,8 +68,63 @@ export default {
     isTurn() {
       return this.room.turn === this.room.you.id;
     },
+    isPlayerDrawing() {
+      let drawing = false;
+      const animateCards = this.$store.state.animateCards;
+
+      const playerCardIndex = animateCards.findIndex((c) => c.draw && c.player);
+      if (playerCardIndex !== -1) {
+        const card = animateCards[playerCardIndex];
+        if (!card.isTransitionComplete && card.steps !== 0) {
+          drawing = true;
+        }
+      }
+
+      return drawing;
+    },
+    playerCards() {
+      return this.room.you.cards;
+    },
   },
   watch: {
+    playerCards(cards, oldCards) {
+      // player draw card animation
+      if (cards.length > oldCards.length) {
+        const card = cards[this.room.you.lastDrawnCard];
+
+        window.requestAnimationFrame(() => {
+          const cardElement = document.querySelector(
+            `.cards.you :nth-of-type(${this.room.you.lastDrawnCard + 1})`
+          );
+
+          if (cardElement) {
+            cardElement.classList.add("hidden");
+
+            const startBox = this.$refs.stackTopCard.$el.getBoundingClientRect();
+            const destBox = cardElement.getBoundingClientRect();
+
+            this.$store.commit("ADD_ANIMATE_CARD", {
+              ...card,
+              steps: 1,
+              draw: true,
+              player: true,
+              isTransitionComplete: false,
+              drawnIndex: this.room.you.lastDrawnCard,
+              start: {
+                x: startBox.x,
+                y: startBox.y,
+              },
+              dest: {
+                x: destBox.x,
+                y: destBox.y,
+              },
+              transform:
+                "rotate(-30deg) rotateY(20deg) rotateX(20deg) scale(0.85)",
+            });
+          }
+        });
+      }
+    },
     wildcardColor(color) {
       if (this.pickColor && color !== null) {
         this.$store.state.socket.emit("play-card", this.wildcardIndex, color);
@@ -96,15 +154,29 @@ export default {
       for (let i = 0; i < others.length; i++) {
         const other = others[i];
 
-        if (room[other] && room[other].count < oldRoom[other].count) {
-          const card = room.pile[room.pile.length - 1];
-          const cardElement = document.querySelector(
-            `.cards.other.${other} :nth-of-type(${Math.ceil(
-              Math.random() * room[other].count
-            )})`
-          );
-          if (!cardElement) break;
+        if (!room[other]) continue;
 
+        let transform;
+        if (other === "right") {
+          transform =
+            "rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg) scale(0.75)";
+        } else if (other === "left") {
+          transform =
+            "rotate(-15deg) rotateY(-50deg) rotateZ(-5deg) rotateX(20deg) scale(0.75)";
+        } else {
+          transform = "scale(0.6)";
+        }
+
+        const card = room.pile[room.pile.length - 1];
+        const cardElement = document.querySelector(
+          `.cards.other.${other} :nth-of-type(${Math.ceil(
+            Math.random() * room[other].count
+          )})`
+        );
+        if (!cardElement) continue;
+
+        // play card animation
+        if (room[other].count < oldRoom[other].count) {
           const box = cardElement.getBoundingClientRect();
           const centerX = window.innerWidth / 2;
           const centerY = window.innerHeight / 2;
@@ -122,8 +194,30 @@ export default {
               x: centerX - box.width / 2 - 25,
               y: centerY - box.height / 2 - 30,
             },
+            transform: transform,
+          });
+        } else if (room[other].count > oldRoom[other].count) {
+          const startBox = this.$refs.stackTopCard.$el.getBoundingClientRect();
+          const destBox = cardElement.getBoundingClientRect();
+
+          this.$store.commit("ADD_ANIMATE_CARD", {
+            ...card,
+            steps: 1,
+            draw: true,
+            other: true,
+            isTransitionComplete: false,
+            drawnIndex: this.room.you.lastDrawnCard,
+            start: {
+              x: startBox.x,
+              y: startBox.y,
+            },
+            dest: {
+              x: destBox.x,
+              y: destBox.y,
+            },
             transform:
-              "rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg) scale(0.75)",
+              "rotate(-30deg) rotateY(20deg) rotateX(20deg) scale(0.85)",
+            endTransform: transform,
           });
         }
       }
@@ -134,6 +228,17 @@ export default {
       this.$store.state.socket.emit("leave-room");
       this.$store.commit("RESET_ROOM");
       this.$router.push({ name: "Home" });
+    },
+    drawCard() {
+      if (
+        !this.room.started ||
+        !this.isTurn ||
+        this.drawing ||
+        !this.room.you.canDraw
+      )
+        return;
+
+      this.$store.state.socket.emit("draw-card");
     },
   },
   mounted() {
@@ -178,6 +283,7 @@ export default {
         :start="card.start"
         :dest="card.dest"
         :transform="card.transform"
+        :back="card.other && card.draw"
         animate
       />
     </div>
@@ -223,14 +329,7 @@ export default {
     </div>
 
     <div class="hud">
-      <div
-        class="stack"
-        @click="
-          room.started && isTurn && !drawing
-            ? $store.state.socket.emit('draw-card')
-            : null
-        "
-      >
+      <div class="stack" @click="drawCard">
         <Card back />
         <Card back />
         <Card back />
@@ -238,7 +337,7 @@ export default {
         <Card back />
         <Card back />
         <Card back :class="{ draw: playableCardCount === 0 && isTurn }" />
-        <Card back />
+        <Card back ref="stackTopCard" />
       </div>
 
       <div
@@ -248,7 +347,7 @@ export default {
         :style="{ '--count': `${room.you.count}` }"
       >
         <Card
-          v-for="(card, i) in room.you.cards"
+          v-for="(card, i) in playerCards"
           :key="`${i}-you-${card.color}${card.number}${card.type}`"
           :index="i"
           :color="card.color"
@@ -469,7 +568,7 @@ $table-rotatex: 58deg;
   width: 100vw;
   height: 100vh;
   position: absolute;
-  z-index: 1000;
+  z-index: 1001;
   display: flex;
 
   .container {
@@ -731,7 +830,7 @@ $table-rotatex: 58deg;
       margin-left: max(calc(-4.5px * var(--count)), -90px);
 
       &:first-of-type {
-        margin-left: 0;
+        margin-left: 0 !important;
       }
 
       @media screen and (max-width: $mobile) {

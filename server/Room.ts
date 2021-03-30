@@ -20,7 +20,7 @@ interface RoomInterface {
   addPlayer(player: Player): void;
   removePlayer(player: Player): void;
   startGame(): void;
-  giveCards(player: Player, amount: number): void;
+  giveCard(player: Player): Card;
   playCard(player: Player, cardIndex: number): void;
   getNextPlayer(): Player;
   refillDeckFromPile(): void;
@@ -97,7 +97,10 @@ export default class Room implements RoomInterface {
 
     // give players cards
     this.players.forEach((p) => {
-      this.giveCards(p, 7);
+      for (let i = 0; i < 7; i++) {
+        this.giveCard(p);
+      }
+
       p.sortCards();
     });
 
@@ -115,29 +118,24 @@ export default class Room implements RoomInterface {
     this.broadcastState();
   }
 
-  giveCards(player: Player, amount: number): Card[] {
-    let givenCards: Card[] = [];
-
-    for (let i = 0; i < amount; i++) {
-      if (this.deck.cards.length === 0) {
-        this.refillDeckFromPile();
-      }
-
-      const card = this.deck.pickCard();
-      givenCards.push(card);
-      player.cards.push(card);
+  giveCard(player: Player): Card {
+    if (this.deck.cards.length === 0) {
+      this.refillDeckFromPile();
     }
+
+    const card = this.deck.pickCard();
+    player.cards.push(card);
 
     if (this.turn.id === player.id && this.started) {
       player.findPlayableCards(this.topCard());
     }
 
-    return givenCards;
+    return card;
   }
 
-  async drawCards(player: Player) {
+  async drawCards(player: Player, amount: number = -1) {
     // exit early if player has already drawn cards this turn
-    if (!player.canDraw) return;
+    if (!player.canDraw && amount === -1) return;
 
     const hasPlayableCard = player.cards.findIndex((c) => c.playable) !== -1;
 
@@ -148,8 +146,9 @@ export default class Room implements RoomInterface {
     if (hasPlayableCard) loop = drawn.findIndex((c) => c.playable) === -1;
     else loop = player.cards.findIndex((c) => c.playable) === -1;
 
-    while (loop) {
-      drawn.push(...this.giveCards(player, 1));
+    let i = 0;
+    while ((amount === -1 && loop) || (amount !== -1 && amount !== i)) {
+      drawn.push(this.giveCard(player));
 
       player.sortCards();
 
@@ -159,17 +158,18 @@ export default class Room implements RoomInterface {
       this.broadcastState();
 
       // delay drawing
-      await sleep(800);
+      await sleep(amount !== -1 ? 400 : 800);
 
       // recheck loop conditions every iteration
       if (hasPlayableCard) loop = drawn.findIndex((c) => c.playable) === -1;
       else loop = player.cards.findIndex((c) => c.playable) === -1;
+      i++;
     }
 
     player.canDraw = false;
   }
 
-  playCard(player: Player, cardIndex: number) {
+  async playCard(player: Player, cardIndex: number) {
     if (!player.cards[cardIndex] || this.turn.id !== player.id || !player.cards[cardIndex].playable) return;
 
     // get card and remove from players cards
@@ -180,6 +180,7 @@ export default class Room implements RoomInterface {
     this.pile.push(card);
 
     const nextPlayer = this.getNextPlayer();
+    let draw = 0;
 
     switch (card.type) {
       case CardType.Plus2:
@@ -187,7 +188,7 @@ export default class Room implements RoomInterface {
           nextPlayer.mustStack = true;
           this.stack += 2;
         } else {
-          this.giveCards(nextPlayer, this.stack + 2);
+          draw = this.stack + 2;
           this.clearStack();
         }
         break;
@@ -196,7 +197,7 @@ export default class Room implements RoomInterface {
           nextPlayer.mustStack = true;
           this.stack += 4;
         } else {
-          this.giveCards(nextPlayer, this.stack + 4);
+          draw = this.stack + 4;
           this.clearStack();
         }
         break;
@@ -207,7 +208,7 @@ export default class Room implements RoomInterface {
 
     // punish player for not calling uno
     if (player.cards.length === 1 && !player.hasCalledUno) {
-      this.giveCards(player, 2);
+      await this.drawCards(player, 2);
     }
     player.hasCalledUno = false;
 
@@ -216,7 +217,7 @@ export default class Room implements RoomInterface {
       ((card.type === CardType.Plus2 || card.type === CardType.Plus4) && !nextPlayer.mustStack) ||
       card.type === CardType.Skip
     ) {
-      this.nextTurn(true);
+      this.nextTurn(true, draw);
     } else {
       this.nextTurn();
     }
@@ -227,9 +228,13 @@ export default class Room implements RoomInterface {
     this.players.forEach((p) => (p.mustStack = false));
   }
 
-  nextTurn(skip: boolean = false) {
+  async nextTurn(skip: boolean = false, draw: number = 0) {
     this.turn.clearPlayableCards();
     this.turn.canDraw = false;
+
+    if (draw !== 0) {
+      await this.drawCards(this.getNextPlayer(), draw);
+    }
 
     this.turn = skip ? this.getNextPlayer(1) : this.getNextPlayer();
     this.turn.canDraw = true;
