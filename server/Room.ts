@@ -233,6 +233,8 @@ export default class Room implements RoomInterface {
     this.turn.canDraw = false;
 
     if (draw !== 0) {
+      this.broadcastState();
+      await sleep(800);
       await this.drawCards(this.getNextPlayer(), draw);
     }
 

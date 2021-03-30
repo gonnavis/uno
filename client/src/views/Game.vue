@@ -31,7 +31,7 @@ export default {
       );
       if (playerCardIndex !== -1) {
         const card = animateCards[playerCardIndex];
-        if (!card.isTransitionComplete && card.steps !== 0) {
+        if (!card.isTransitionComplete && card.steps === 1) {
           hide = true;
         }
       } else if (
