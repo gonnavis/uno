@@ -116,6 +116,7 @@ export default {
       this.$refs.card.style.opacity = "0";
 
       this.$store.state.socket.emit("play-card", this.index);
+      this.$emit("card-played");
     },
     calculateColor() {
       const gap = 1.85;

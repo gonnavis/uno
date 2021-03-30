@@ -136,6 +136,9 @@ export default class Room implements RoomInterface {
   async drawCards(player: Player, amount: number = -1) {
     // exit early if player has already drawn cards this turn
     if (!player.canDraw && amount === -1) return;
+    if (amount === -1) player.canDraw = false;
+
+    player.drawing = true;
 
     const hasPlayableCard = player.cards.findIndex((c) => c.playable) !== -1;
 
@@ -166,7 +169,8 @@ export default class Room implements RoomInterface {
       i++;
     }
 
-    player.canDraw = false;
+    player.drawing = false;
+    this.broadcastState();
   }
 
   async playCard(player: Player, cardIndex: number) {

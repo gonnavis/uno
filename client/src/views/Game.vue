@@ -16,6 +16,7 @@ export default {
       wildcardIndex: -1,
       drawing: false,
       hasCalledUnoClient: false,
+      canDrawClient: true,
     };
   },
   computed: {
@@ -68,25 +69,35 @@ export default {
     isTurn() {
       return this.room.turn === this.room.you.id;
     },
-    isPlayerDrawing() {
-      let drawing = false;
-      const animateCards = this.$store.state.animateCards;
+    // isPlayerDrawing() {
+    //   let drawing = false;
+    //   const animateCards = this.$store.state.animateCards;
 
-      const playerCardIndex = animateCards.findIndex((c) => c.draw && c.player);
-      if (playerCardIndex !== -1) {
-        const card = animateCards[playerCardIndex];
-        if (!card.isTransitionComplete && card.steps !== 0) {
-          drawing = true;
-        }
-      }
+    //   const playerCardIndex = animateCards.findIndex((c) => c.draw && c.player);
+    //   if (playerCardIndex !== -1) {
+    //     const card = animateCards[playerCardIndex];
+    //     if (!card.isTransitionComplete && card.steps !== 0) {
+    //       drawing = true;
+    //     }
+    //   }
 
-      return drawing;
-    },
+    //   return drawing;
+    // },
     playerCards() {
       return this.room.you.cards;
     },
+    animateCards() {
+      return this.$store.state.animateCards;
+    },
   },
   watch: {
+    isTurn(val) {
+      if (val) {
+        this.canDrawClient = true;
+      } else {
+        this.canDrawClient = false;
+      }
+    },
     playerCards(cards, oldCards) {
       // player draw card animation
       if (cards.length > oldCards.length) {
@@ -137,6 +148,12 @@ export default {
     room(room, oldRoom) {
       if (room.you.count === 2 && this.hasCalledUnoClient)
         this.hasCalledUnoClient = false;
+
+      // fix edge case where player cannot draw cards after drawing and playing +2 or skip in 1v1
+      if (room.you.canDraw && !this.canDrawClient) this.canDrawClient = true;
+
+      // update check for drawing cards client side
+      if (this.drawing) this.drawing = room.you.drawing;
 
       // player playing card animation
       const index = this.$store.state.animateCards.findIndex((c) => c.player);
@@ -234,11 +251,15 @@ export default {
         !this.room.started ||
         !this.isTurn ||
         this.drawing ||
-        !this.room.you.canDraw
+        !this.room.you.canDraw ||
+        !this.canDrawClient ||
+        this.room.you.mustStack
       )
         return;
 
       this.$store.state.socket.emit("draw-card");
+      this.canDrawClient = false;
+      this.drawing = true;
     },
   },
   mounted() {
@@ -336,7 +357,13 @@ export default {
         <Card back />
         <Card back />
         <Card back />
-        <Card back :class="{ draw: playableCardCount === 0 && isTurn }" />
+        <Card
+          back
+          :class="{
+            draw:
+              playableCardCount === 0 && isTurn && canDrawClient && !drawing,
+          }"
+        />
         <Card back ref="stackTopCard" />
       </div>
 
@@ -353,7 +380,8 @@ export default {
           :color="card.color"
           :number="card.number"
           :type="card.type"
-          :playable="card.playable && isTurn"
+          :playable="card.playable && isTurn && !drawing"
+          @card-played="canDrawClient = false"
           @pick-color="
             pickColor = true;
             wildcardIndex = $event;

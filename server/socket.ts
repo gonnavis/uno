@@ -118,7 +118,6 @@ export default function(socket: Socket) {
     const room = rooms[player.roomId];
 
     room.drawCards(player);
-    room.broadcastState();
   });
 
   socket.on("play-card", (index: number, color: number) => {
