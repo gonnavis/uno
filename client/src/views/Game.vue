@@ -244,7 +244,8 @@ export default {
     leaveRoom() {
       this.$store.state.socket.emit("leave-room");
       this.$store.commit("RESET_ROOM");
-      this.$router.push({ name: "Home" });
+
+      if (this.$route.name !== "Home") this.$router.push({ name: "Home" });
     },
     drawCard() {
       if (
@@ -267,6 +268,9 @@ export default {
 
     window.onblur = () => (this.$store.state.animateCards = []);
     window.onfocus = () => (this.$store.state.animateCards = []);
+  },
+  beforeDestroy() {
+    this.leaveRoom();
   },
   destroyed() {
     window.onblur = null;

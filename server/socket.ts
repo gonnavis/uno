@@ -116,7 +116,6 @@ export default function(socket: Socket) {
     if (!player.inRoom || rooms[player.roomId].turn.id !== player.id || !player.canDraw) return;
 
     const room = rooms[player.roomId];
-
     room.drawCards(player);
   });
 
