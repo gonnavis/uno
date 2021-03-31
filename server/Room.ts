@@ -109,6 +109,8 @@ export default class Room implements RoomInterface {
     this.turn = this.players[randIndex];
     this.turn.findPlayableCards(this.topCard());
     this.turn.canDraw = true;
+    this.turn.canPlay = true;
+
     if (this.turn.bot) {
       this.turn.botPlay(this);
     }
@@ -118,6 +120,9 @@ export default class Room implements RoomInterface {
     this.broadcastState();
   }
 
+  // giveCard takes the first card from the deck array and pushes it onto player's cards
+  // then updates the player's playable cards if it is their turn
+  // returns the given Card
   giveCard(player: Player): Card {
     if (this.deck.cards.length === 0) {
       this.refillDeckFromPile();
@@ -133,26 +138,24 @@ export default class Room implements RoomInterface {
     return card;
   }
 
+  // drawCards draws cards from the deck and gives them to player
   async drawCards(player: Player, amount: number = -1) {
-    // exit early if player has already drawn cards this turn
-    if (!player.canDraw && amount === -1) return;
-    if (amount === -1) player.canDraw = false;
+    // exit early if player:
+    // - is drawing,
+    // - player is not able to draw and they aren't being +2ed or +4ed
+    if (player.drawing || (!player.canDraw && amount === -1)) return;
 
+    if (amount === -1) player.canDraw = false;
     player.drawing = true;
 
-    const hasPlayableCard = player.cards.findIndex((c) => c.playable) !== -1;
-
     const drawn: Card[] = [];
-    let loop = false;
-
-    // check loop conditions
-    if (hasPlayableCard) loop = drawn.findIndex((c) => c.playable) === -1;
-    else loop = player.cards.findIndex((c) => c.playable) === -1;
-
     let i = 0;
-    while ((amount === -1 && loop) || (amount !== -1 && amount !== i)) {
-      drawn.push(this.giveCard(player));
 
+    // loops while:
+    // - if amount is -1: player hasn't drawn a playable card
+    // - else: draws until i === amount
+    while ((amount === -1 && drawn.findIndex((c) => c.playable) === -1) || (amount !== -1 && amount !== i)) {
+      drawn.push(this.giveCard(player));
       player.sortCards();
 
       // find index of last drawn card in sorted list
@@ -163,9 +166,6 @@ export default class Room implements RoomInterface {
       // delay drawing
       await sleep(amount !== -1 ? 400 : 800);
 
-      // recheck loop conditions every iteration
-      if (hasPlayableCard) loop = drawn.findIndex((c) => c.playable) === -1;
-      else loop = player.cards.findIndex((c) => c.playable) === -1;
       i++;
     }
 
@@ -173,8 +173,15 @@ export default class Room implements RoomInterface {
     this.broadcastState();
   }
 
+  // playCard performs game logic based on what card a player wishes to play
   async playCard(player: Player, cardIndex: number) {
-    if (!player.cards[cardIndex] || this.turn.id !== player.id || !player.cards[cardIndex].playable) return;
+    if (
+      !player.canPlay ||
+      !player.cards[cardIndex] ||
+      this.turn.id !== player.id ||
+      !player.cards[cardIndex].playable
+    )
+      return;
 
     // get card and remove from players cards
     const card = player.cards[cardIndex];
@@ -211,6 +218,7 @@ export default class Room implements RoomInterface {
     }
 
     // punish player for not calling uno
+    // TODO make other players need to call out player to be punished
     if (player.cards.length === 1 && !player.hasCalledUno) {
       await this.drawCards(player, 2);
     }
@@ -235,15 +243,27 @@ export default class Room implements RoomInterface {
   async nextTurn(skip: boolean = false, draw: number = 0) {
     this.turn.clearPlayableCards();
     this.turn.canDraw = false;
+    this.turn.canPlay = false;
 
-    if (draw !== 0) {
+    if (skip || draw !== 0) {
+      this.turn = this.getNextPlayer();
+      this.turn.canDraw = false;
+      this.turn.canPlay = false;
+
       this.broadcastState();
-      await sleep(800);
-      await this.drawCards(this.getNextPlayer(), draw);
+      await sleep(1500);
+
+      if (draw !== 0) {
+        await this.drawCards(this.turn, draw);
+      }
     }
 
-    this.turn = skip ? this.getNextPlayer(1) : this.getNextPlayer();
+    // gets next player - works because if player should be skipped then turn has already been incremented above
+    // so here next player acts as skip otherwise, just regular increment of next player
+    this.turn = this.getNextPlayer();
+
     this.turn.canDraw = true;
+    this.turn.canPlay = true;
     this.turn.findPlayableCards(this.topCard());
 
     this.checkForWinner();

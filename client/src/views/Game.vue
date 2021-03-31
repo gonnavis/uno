@@ -17,6 +17,7 @@ export default {
       drawing: false,
       hasCalledUnoClient: false,
       canDrawClient: true,
+      canPlayClient: true,
     };
   },
   computed: {
@@ -94,8 +95,10 @@ export default {
     isTurn(val) {
       if (val) {
         this.canDrawClient = true;
+        this.canPlayClient = true;
       } else {
         this.canDrawClient = false;
+        this.canPlayClient = false;
       }
     },
     playerCards(cards, oldCards) {
@@ -148,9 +151,6 @@ export default {
     room(room, oldRoom) {
       if (room.you.count === 2 && this.hasCalledUnoClient)
         this.hasCalledUnoClient = false;
-
-      // fix edge case where player cannot draw cards after drawing and playing +2 or skip in 1v1
-      if (room.you.canDraw && !this.canDrawClient) this.canDrawClient = true;
 
       // update check for drawing cards client side
       if (this.drawing) this.drawing = room.you.drawing;
@@ -262,6 +262,15 @@ export default {
       this.canDrawClient = false;
       this.drawing = true;
     },
+    playCard(index) {
+      if (!this.room.you.canPlay || !this.canPlayClient) return;
+
+      // stop player from drawing or playing while awaiting response from server
+      this.canDrawClient = false;
+      this.canPlayClient = false;
+
+      this.$store.state.socket.emit("play-card", index);
+    },
   },
   mounted() {
     if (!this.room.id) return this.$router.push({ name: "Home" });
@@ -365,7 +374,11 @@ export default {
           back
           :class="{
             draw:
-              playableCardCount === 0 && isTurn && canDrawClient && !drawing,
+              playableCardCount === 0 &&
+              isTurn &&
+              canDrawClient &&
+              !drawing &&
+              room.you.canDraw,
           }"
         />
         <Card back ref="stackTopCard" />
@@ -374,7 +387,7 @@ export default {
       <div
         v-if="room.you"
         class="cards you"
-        :class="{ turn: isTurn }"
+        :class="{ turn: isTurn && room.you.canPlay }"
         :style="{ '--count': `${room.you.count}` }"
       >
         <Card
@@ -384,8 +397,8 @@ export default {
           :color="card.color"
           :number="card.number"
           :type="card.type"
-          :playable="card.playable && isTurn && !drawing"
-          @card-played="canDrawClient = false"
+          :playable="card.playable && isTurn && !drawing && room.you.canPlay"
+          @card-played="playCard"
           @pick-color="
             pickColor = true;
             wildcardIndex = $event;

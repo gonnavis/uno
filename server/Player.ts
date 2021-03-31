@@ -15,6 +15,7 @@ interface PlayerInterface {
   lastDrawnCard: number;
   canDraw: boolean;
   drawing: boolean;
+  canPlay: boolean;
 
   sortCards(): void;
   findPlayableCards(topCard: Card): void;
@@ -35,6 +36,7 @@ export default class Player implements PlayerInterface {
   lastDrawnCard = -1;
   canDraw = false;
   drawing = false;
+  canPlay = false;
 
   constructor(socket: Socket | null, bot: boolean = false) {
     this.bot = bot;
