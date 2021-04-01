@@ -194,7 +194,7 @@ export default {
       <img
         v-if="currentLevel === 'main'"
         class="logo"
-        src="@/assets/logo.jpg"
+        src="@/assets/logo.png"
         alt="Scuffed Uno"
       />
       <img
