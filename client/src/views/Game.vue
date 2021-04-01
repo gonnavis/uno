@@ -445,7 +445,7 @@ export default {
         Start Game
       </button>
 
-      <button
+      <img
         v-if="
           room.you &&
           room.you.cards &&
@@ -455,14 +455,13 @@ export default {
           !hasCalledUnoClient &&
           playableCardCount !== 0
         "
-        class="uno-btn rounded-btn"
+        src="@/assets/logo.png"
+        class="uno-btn"
         @click="
           $store.state.socket.emit('call-uno');
           hasCalledUnoClient = true;
         "
-      >
-        Call Uno
-      </button>
+      />
     </div>
   </div>
 </template>
@@ -536,14 +535,34 @@ $table-rotatex: 58deg;
 
   .uno-btn {
     position: absolute;
-    bottom: 60px;
+    bottom: 85px;
     right: 60px;
-    font-size: 2rem;
+    width: 200px;
+    cursor: pointer;
+    animation: grow 2.5s ease-in-out infinite;
+    --start-transform: 1;
+    --end-transform: 1.15;
+
+    @keyframes grow {
+      from {
+        transform: scale(var(--start-transform));
+      }
+
+      50% {
+        transform: scale(var(--end-transform));
+      }
+
+      to {
+        transform: scale(--start-transform);
+      }
+    }
 
     @media screen and (max-width: $mobile) {
       transform: scale(0.7);
-      bottom: 30px;
+      bottom: 20px;
       right: 30px;
+      --start-transform: 0.7;
+      --end-transform: 0.8;
     }
   }
 
