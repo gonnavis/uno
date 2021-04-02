@@ -338,19 +338,20 @@ img {
     left: 0;
 
     .logo {
+      margin-left: 10px;
       width: auto;
       height: 100%;
       user-select: none;
       -webkit-user-drag: none;
+      transform: scale(0.9);
 
       &.back {
         cursor: pointer;
-        transform: translateX(10px);
       }
     }
 
     .title {
-      margin-left: 30px;
+      margin-left: clamp(5px, 2vw, 20px);
       font-size: clamp(1.7rem, 4vw, 2.5rem);
       font-weight: bold;
     }
