@@ -24,6 +24,7 @@ const defaultRoom = {
 const store = new Vuex.Store({
   state: {
     isMobile,
+    isConnected: false,
     windowWidth: 1920,
     windowHeight: 1080,
     socket: null,
@@ -31,19 +32,25 @@ const store = new Vuex.Store({
     room: { ...defaultRoom },
   },
   mutations: {
+    SET_WINDOW_DIMENSIONS(state, { width, height }) {
+      state.windowWidth = width;
+      state.windowHeight = height;
+    },
+
     SET_SOCKET(state, socket) {
       state.socket = socket;
     },
+    SET_IS_CONNECTED(state, status) {
+      state.isConnected = status;
+    },
+
     SET_ROOM(state, room) {
       state.room = room;
     },
     RESET_ROOM(state) {
       state.room = { ...defaultRoom };
     },
-    SET_WINDOW_DIMENSIONS(state, { width, height }) {
-      state.windowWidth = width;
-      state.windowHeight = height;
-    },
+
     ADD_ANIMATE_CARD(state, card) {
       state.animateCards = [...state.animateCards, card];
     },

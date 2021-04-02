@@ -8,6 +8,8 @@ const SERVER_URL =
 const socket = io(SERVER_URL);
 store.commit("SET_SOCKET", socket);
 
-socket.on("connect", () => console.log("[SocketIO]: Connected!"));
+// track connection status
+socket.on("connect", () => store.commit("SET_IS_CONNECTED", true));
+socket.on("disconnect", () => store.commit("SET_IS_CONNECTED", false));
 
 socket.on("state", (room) => store.commit("SET_ROOM", room));

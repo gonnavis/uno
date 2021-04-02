@@ -5,13 +5,27 @@
     <div v-if="offline" class="offline">
       <div class="message">You are currently offline and cannot play.</div>
     </div>
+
+    <div v-else-if="!$store.state.isConnected" class="connecting">
+      <div class="loading">
+        <card back />
+        <card back />
+        <card back />
+        <card back />
+        <card back />
+      </div>
+
+      <h1>Connecting to server...</h1>
+    </div>
   </div>
 </template>
 
 <script>
 import "@/api/socket";
+import Card from "@/components/Card.vue";
 
 export default {
+  components: { Card },
   name: "App",
   data() {
     return {
@@ -78,6 +92,82 @@ body {
       border-radius: 10px;
       padding: 2.5rem;
       font-weight: bold;
+    }
+  }
+
+  .connecting {
+    @extend .offline;
+    background: radial-gradient(
+      circle,
+      rgb(192, 34, 26) 0%,
+      rgb(146, 25, 19) 60%,
+      rgb(109, 16, 11) 100%
+    );
+
+    @media screen and (max-width: 900px) {
+      .loading * {
+        margin-left: -30px !important;
+
+        &:nth-child(1) {
+          margin-left: 0 !important;
+        }
+      }
+
+      h1 {
+        margin-top: 37vh !important;
+      }
+    }
+
+    h1 {
+      position: absolute;
+      font-weight: bold;
+      color: white;
+      font-size: 2rem;
+      margin-top: 30vh;
+    }
+
+    .loading {
+      display: flex;
+
+      * {
+        margin-left: -60px;
+        animation: lift 2s ease-in-out infinite;
+
+        &:nth-child(1) {
+          margin-left: 0;
+        }
+
+        &:nth-child(2) {
+          animation-delay: 0.4s;
+        }
+
+        &:nth-child(3) {
+          animation-delay: 0.8s;
+        }
+
+        &:nth-child(4) {
+          animation-delay: 1.2s;
+        }
+
+        &:nth-child(5) {
+          animation-delay: 1.6s;
+        }
+
+        @keyframes lift {
+          from {
+            transform: translateY(0);
+          }
+
+          25% {
+            transform: translateY(-25px);
+          }
+
+          50%,
+          to {
+            transform: translateY(0);
+          }
+        }
+      }
     }
   }
 }
