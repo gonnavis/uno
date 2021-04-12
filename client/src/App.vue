@@ -1,8 +1,8 @@
 <template>
   <div id="app">
-    <router-view />
+    <router-view :key="refresh" />
 
-    <div v-if="offline" class="offline">
+    <div v-if="$store.state.isOffline" class="offline">
       <div class="message">You are currently offline and cannot play.</div>
     </div>
 
@@ -29,7 +29,7 @@ export default {
   name: "App",
   data() {
     return {
-      offline: !navigator.onLine,
+      refresh: false,
     };
   },
   computed: {
@@ -39,12 +39,27 @@ export default {
     route() {
       return this.$route.name;
     },
+    disconnected() {
+      return this.$store.state.isConnected || this.$store.state.isOffline;
+    },
   },
   watch: {
     route(route) {
       if (route === "Game" && !this.room.id)
         return this.$router.push({ name: "Home" });
       else if (route === "Home" && this.room.id) {
+        this.$store.state.socket.emit("leave-room");
+        this.$store.commit("RESET_ROOM");
+      }
+    },
+    disconnected(val) {
+      if (val) {
+        if (this.$route.name !== "Home") {
+          this.$router.push({ name: "Home" });
+        } else {
+          this.refresh = !this.refresh;
+        }
+
         this.$store.state.socket.emit("leave-room");
         this.$store.commit("RESET_ROOM");
       }
@@ -84,7 +99,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 1010;
 
     .message {
       font-size: 1.8rem;

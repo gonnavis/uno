@@ -25,6 +25,7 @@ const store = new Vuex.Store({
   state: {
     isMobile,
     isConnected: false,
+    isOffline: !navigator.onLine,
     windowWidth: 1920,
     windowHeight: 1080,
     socket: null,
@@ -43,6 +44,9 @@ const store = new Vuex.Store({
     SET_IS_CONNECTED(state, status) {
       state.isConnected = status;
     },
+    SET_IS_OFFLINE(state, status) {
+      state.isOffline = status;
+    },
 
     SET_ROOM(state, room) {
       state.room = room;
@@ -60,9 +64,11 @@ const store = new Vuex.Store({
       state.animateCards = cards;
     },
   },
-  actions: {},
-  modules: {},
 });
+
+// isOffline listeners
+window.addEventListener("online", () => store.commit("SET_IS_OFFLINE", false));
+window.addEventListener("offline", () => store.commit("SET_IS_OFFLINE", true));
 
 const resizeObserver = new ResizeObserver(() => {
   store.commit("SET_WINDOW_DIMENSIONS", { width: window.innerWidth, height: window.innerHeight });
