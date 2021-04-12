@@ -251,6 +251,17 @@ export default {
             );
           }
         }, 200);
+
+        // if after 5s player card isnt removed then remove it manually
+        if (card.player) {
+          setTimeout(() => {
+            if (this.$refs.card && this.$refs.card.ontransitionend)
+              this.$store.commit(
+                "REMOVE_ANIMATE_CARD",
+                this.findAnimateCardsIndex(id)
+              );
+          }, 5000);
+        }
       });
     }
   },
