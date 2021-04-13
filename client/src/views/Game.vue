@@ -1,12 +1,20 @@
 <script>
 import Card from "@/components/Card.vue";
 import UMenuModal from "@/components/Menu/UMenuModal.vue";
+import UGameOtherCards from "@/components/Game/UGameOtherCards.vue";
+import UGameStack from "@/components/Game/UGameStack.vue";
+import UGameColorPicker from "@/components/Game/UGameColorPicker.vue";
+import UGamePlayerCards from "@/components/Game/UGamePlayerCards.vue";
 
 export default {
   name: "Game",
   components: {
     Card,
     UMenuModal,
+    UGameOtherCards,
+    UGameStack,
+    UGameColorPicker,
+    UGamePlayerCards,
   },
   data() {
     return {
@@ -114,7 +122,9 @@ export default {
           if (cardElement) {
             cardElement.classList.add("hidden");
 
-            const startBox = this.$refs.stackTopCard.$el.getBoundingClientRect();
+            const startBox = document
+              .getElementById("stack-top-card")
+              .getBoundingClientRect();
             const destBox = cardElement.getBoundingClientRect();
 
             this.$store.commit("ADD_ANIMATE_CARD", {
@@ -214,7 +224,9 @@ export default {
             transform: transform,
           });
         } else if (room[other].count > oldRoom[other].count) {
-          const startBox = this.$refs.stackTopCard.$el.getBoundingClientRect();
+          const startBox = document
+            .getElementById("stack-top-card")
+            .getBoundingClientRect();
           const destBox = cardElement.getBoundingClientRect();
 
           this.$store.commit("ADD_ANIMATE_CARD", {
@@ -298,14 +310,10 @@ export default {
       <button class="btn rounded-btn" @click="leaveRoom">Main Menu</button>
     </u-menu-modal>
 
-    <div v-if="pickColor" class="color-picker">
-      <div class="container">
-        <button @click="wildcardColor = 0" class="red"></button>
-        <button @click="wildcardColor = 1" class="green"></button>
-        <button @click="wildcardColor = 2" class="yellow"></button>
-        <button @click="wildcardColor = 3" class="blue"></button>
-      </div>
-    </div>
+    <u-game-color-picker
+      v-if="pickColor"
+      @pick-color="wildcardColor = $event"
+    />
 
     <div class="animation-cards">
       <Card
@@ -336,54 +344,19 @@ export default {
 
     <div class="direction" :class="{ reverse: !room.directionReversed }" />
 
-    <div
-      v-if="room.right"
-      class="cards other right"
-      :style="{ '--count': `${room.right.count}` }"
-    >
-      <Card
-        v-for="i in room.right.count"
-        :key="i"
-        back
-        :style="{ zIndex: i }"
-      />
-    </div>
-    <div
-      v-if="room.left"
-      class="cards other left"
-      :style="{ '--count': `${room.left.count}` }"
-    >
-      <Card v-for="i in room.left.count" :key="i" back :style="{ zIndex: i }" />
-    </div>
-    <div
-      v-if="room.top"
-      class="cards other top"
-      :style="{ '--count': `${room.top.count}` }"
-    >
-      <Card v-for="i in room.top.count" :key="i" back :style="{ zIndex: i }" />
-    </div>
+    <u-game-other-cards :room="room" />
 
     <div class="hud">
-      <div class="stack" @click="drawCard">
-        <Card back />
-        <Card back />
-        <Card back />
-        <Card back />
-        <Card back />
-        <Card back />
-        <Card
-          back
-          :class="{
-            draw:
-              playableCardCount === 0 &&
-              isTurn &&
-              canDrawClient &&
-              !drawing &&
-              room.you.canDraw,
-          }"
-        />
-        <Card back ref="stackTopCard" />
-      </div>
+      <u-game-stack
+        :applyDrawClass="
+          playableCardCount === 0 &&
+          isTurn &&
+          canDrawClient &&
+          !drawing &&
+          room.you.canDraw
+        "
+        @draw-card="drawCard"
+      />
 
       <div
         v-if="room.you"
@@ -407,35 +380,7 @@ export default {
         />
       </div>
 
-      <!-- Player display cards -->
-      <div
-        v-if="room.you && room.started"
-        class="player-card you"
-        :class="{ playing: isTurn }"
-      >
-        {{ room.you.username }} : {{ room.you.count }}
-      </div>
-      <div
-        v-if="room.right && room.started"
-        class="player-card right"
-        :class="{ playing: room.turn === room.right.id }"
-      >
-        {{ room.right.username }} : {{ room.right.count }}
-      </div>
-      <div
-        v-if="room.left && room.started"
-        class="player-card left"
-        :class="{ playing: room.turn === room.left.id }"
-      >
-        {{ room.left.username }} : {{ room.left.count }}
-      </div>
-      <div
-        v-if="room.top && room.started"
-        class="player-card top"
-        :class="{ playing: room.turn === room.top.id }"
-      >
-        {{ room.top.username }} : {{ room.top.count }}
-      </div>
+      <u-game-player-cards :room="room" :is-turn="isTurn" />
 
       <button
         v-if="room.isHost && !room.started && room.playerCount > 1"
@@ -515,16 +460,6 @@ $table-rotatex: 58deg;
         transform-origin: top left;
       }
     }
-
-    .stack {
-      transform-origin: bottom left;
-      margin-left: -30px;
-      margin-bottom: -10px;
-
-      .card:not(:first-of-type) {
-        margin-top: -98.5px !important;
-      }
-    }
   }
 
   .start-btn {
@@ -563,147 +498,6 @@ $table-rotatex: 58deg;
       right: 30px;
       --start-transform: 0.7;
       --end-transform: 0.8;
-    }
-  }
-
-  .player-card {
-    padding: 12px 22px;
-    background-color: white;
-    border: 6px solid black;
-    border-radius: 8px;
-    position: absolute;
-    z-index: 100;
-    font-weight: bold;
-    display: flex;
-
-    @media screen and (max-width: $mobile) {
-      transform: scale(0.6);
-      transform-origin: center;
-    }
-
-    &.playing {
-      box-shadow: 0px 0px 8px 7px #fcc81c;
-    }
-
-    &.right {
-      right: 105px;
-      bottom: 51%;
-
-      @media screen and (max-width: $mobile) {
-        right: 20px;
-      }
-    }
-
-    &.left {
-      left: 105px;
-      bottom: 51%;
-
-      @media screen and (max-width: $mobile) {
-        left: 10px;
-      }
-    }
-
-    &.top {
-      left: 44%;
-      top: 160px;
-
-      @media screen and (max-width: $mobile) {
-        left: 40.5%;
-        top: 50px;
-      }
-    }
-
-    &.you {
-      left: 45.5%;
-      bottom: 15px;
-      filter: brightness(0.6);
-
-      @media screen and (max-width: $mobile) {
-        bottom: 3px;
-      }
-
-      &.playing {
-        filter: unset;
-      }
-    }
-  }
-}
-
-.color-picker {
-  width: 100vw;
-  height: 100vh;
-  position: absolute;
-  z-index: 1001;
-  display: flex;
-
-  .container {
-    $transform: rotateX($table-rotatex) translateY(-60px);
-    transform: $transform;
-    width: MAX(38vw, 350px);
-    height: MAX(MIN(38vw, 75vh), 350px);
-    border-radius: 20px;
-    margin: auto;
-    padding: 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    grid-gap: 10px;
-    animation: enlarge 9s ease-in-out infinite;
-
-    @keyframes enlarge {
-      from {
-        transform: $transform scale(1);
-      }
-
-      50% {
-        transform: $transform scale(1.1);
-      }
-
-      to {
-        transform: $transform scale(1);
-      }
-    }
-
-    button {
-      --shadow-color: black;
-      opacity: 0.8;
-      border-radius: 10px;
-      width: 100%;
-      height: 100%;
-      outline: none;
-      box-shadow: 0px 25px 30px 5px var(--shadow-color);
-      transition: opacity 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-
-      &:hover {
-        box-shadow: 0 35px 40px 10px var(--shadow-color);
-        opacity: 0.9;
-        transform: scale(1.1);
-        z-index: 5;
-      }
-    }
-
-    .red {
-      border-top-left-radius: 100%;
-      background-color: #ff171a;
-      --shadow-color: #ff000479;
-    }
-
-    .green {
-      border-top-right-radius: 100%;
-      background-color: #41dd2c;
-      --shadow-color: #00ff0d79;
-    }
-
-    .yellow {
-      border-bottom-left-radius: 100%;
-      background-color: #ffee00;
-      --shadow-color: #ffe60079;
-    }
-
-    .blue {
-      border-bottom-right-radius: 100%;
-      background-color: #00a2ff;
-      --shadow-color: #00c3ff79;
     }
   }
 }
@@ -778,77 +572,6 @@ $table-rotatex: 58deg;
   }
 }
 
-.stack {
-  position: absolute;
-  left: 60px;
-  bottom: 29vh;
-  cursor: pointer;
-
-  &.canDraw {
-    box-shadow: 0px 0px 14px 14px #ffe23f, inset 0px 0px 3px 3px #ffe448;
-  }
-
-  .card {
-    pointer-events: none;
-    transform: rotate(-30deg) rotateY(20deg) rotateX(20deg) scale(0.85) !important;
-    cursor: pointer;
-
-    &.draw {
-      animation: pulse infinite 3s ease;
-
-      @keyframes pulse {
-        from {
-          box-shadow: 0px 0px 5px 4px #ffe23f, inset 0px 0px 3px 3px #ffe448;
-        }
-
-        50% {
-          box-shadow: 0px 0px 14px 14px #ffe23f, inset 0px 0px 3px 3px #ffe448;
-        }
-
-        to {
-          box-shadow: 0px 0px 3px 2px #ffe23f, inset 0px 0px 3px 3px #ffe448;
-        }
-      }
-    }
-
-    &:not(:first-of-type) {
-      margin-left: 0;
-      position: absolute;
-      margin-top: -197px !important;
-    }
-
-    &:nth-of-type(6) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
-        translate(-2px, 2px) scale(0.85) !important;
-    }
-
-    &:nth-of-type(5) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
-        translate(-4px, 4px) scale(0.85) !important;
-    }
-
-    &:nth-of-type(4) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
-        translate(-6px, 6px) scale(0.85) !important;
-    }
-
-    &:nth-of-type(3) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
-        translate(-8px, 8px) scale(0.85) !important;
-    }
-
-    &:nth-of-type(2) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
-        translate(-10px, 10px) scale(0.85) !important;
-    }
-
-    &:nth-of-type(1) {
-      transform: rotate(-30deg) rotateY(20deg) rotateX(20deg)
-        translate(-12px, 12px) scale(0.85) !important;
-    }
-  }
-}
-
 .pile {
   width: 300px;
   height: 300px;
@@ -905,58 +628,6 @@ $table-rotatex: 58deg;
 
     @media screen and (max-width: $mobile) {
       margin-bottom: 30px;
-    }
-  }
-
-  &.other {
-    position: absolute;
-
-    .card {
-      margin-left: max(calc(-5.5px * var(--count)), -105px) !important;
-
-      @media screen and (max-width: $mobile) {
-        margin-left: max(calc(-2.75px * var(--count)), -52.5px) !important;
-      }
-    }
-
-    &.right {
-      right: 120px;
-      bottom: 48%;
-      transform-origin: bottom right;
-      transform: rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg)
-        scale(0.75);
-
-      @media screen and (max-width: $mobile) {
-        right: 50px;
-        bottom: 46%;
-      }
-    }
-
-    &.left {
-      left: 120px;
-      bottom: 48%;
-      transform-origin: bottom left;
-      transform: rotate(-15deg) rotateY(-50deg) rotateZ(-5deg) rotateX(20deg)
-        scale(0.75);
-
-      @media screen and (max-width: $mobile) {
-        left: 50px;
-        bottom: 46%;
-      }
-
-      .card:first-of-type {
-        margin-left: 0 !important;
-      }
-    }
-
-    &.top {
-      top: 20px;
-      transform: scale(0.6);
-
-      @media screen and (max-width: $mobile) {
-        transform-origin: top center;
-        top: 20px;
-      }
     }
   }
 }
