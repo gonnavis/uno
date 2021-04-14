@@ -53,6 +53,7 @@ export default {
 
     &::-webkit-scrollbar {
       background: transparent;
+      width: 0;
     }
 
     &::-webkit-scrollbar-thumb {
@@ -64,8 +65,8 @@ export default {
       width: 25px;
       height: 25px;
       position: absolute;
-      top: 20px;
-      right: 15px;
+      top: 16px;
+      right: 16px;
 
       &:hover {
         div {
