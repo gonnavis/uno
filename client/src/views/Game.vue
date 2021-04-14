@@ -361,6 +361,8 @@ export default {
     <u-game-other-cards :room="room" />
 
     <div class="hud">
+      <h1 class="stack-count" v-if="room.stack > 0">+{{ room.stack }}</h1>
+
       <u-game-stack
         :applyDrawClass="
           playableCardCount === 0 &&
@@ -487,6 +489,14 @@ $table-rotatex: 58deg;
         transform-origin: top left;
       }
     }
+  }
+
+  .stack-count {
+    font-weight: 800;
+    color: white;
+    font-size: clamp(3rem, 8vw, 6rem);
+    -webkit-text-stroke: black clamp(2px, 0.5vw, 5px);
+    text-align: center;
   }
 
   .start-btn {

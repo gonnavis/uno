@@ -79,7 +79,7 @@ $mobile: 900px;
     &:not(:first-of-type) {
       margin-left: 0;
       position: absolute;
-      margin-top: -197px !important;
+      margin-top: -197px;
     }
 
     @for $i from 1 through 6 {
