@@ -5,6 +5,7 @@ import UGameOtherCards from "@/components/Game/UGameOtherCards.vue";
 import UGameStack from "@/components/Game/UGameStack.vue";
 import UGameColorPicker from "@/components/Game/UGameColorPicker.vue";
 import UGamePlayerCards from "@/components/Game/UGamePlayerCards.vue";
+import UMenuBtn from "@/components/Menu/UMenuBtn.vue";
 
 export default {
   name: "Game",
@@ -15,6 +16,7 @@ export default {
     UGameStack,
     UGameColorPicker,
     UGamePlayerCards,
+    UMenuBtn,
   },
   data() {
     return {
@@ -26,6 +28,7 @@ export default {
       hasCalledUnoClient: false,
       canDrawClient: true,
       canPlayClient: true,
+      showSettings: false,
     };
   },
   computed: {
@@ -310,6 +313,17 @@ export default {
       <button class="btn rounded-btn" @click="leaveRoom">Main Menu</button>
     </u-menu-modal>
 
+    <button class="settings-btn" @click="showSettings = !showSettings"></button>
+    <u-menu-modal
+      v-if="showSettings"
+      title="Settings"
+      @close="showSettings = false"
+    >
+      <u-menu-btn class="btn rounded-btn" @click="leaveRoom">
+        Leave Game
+      </u-menu-btn>
+    </u-menu-modal>
+
     <u-game-color-picker
       v-if="pickColor"
       @pick-color="wildcardColor = $event"
@@ -429,6 +443,19 @@ $table-rotatex: 58deg;
   * {
     position: absolute;
   }
+}
+
+.settings-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-image: url("../assets/settings.jpg");
+  background-size: 100%;
+  height: clamp(60px, 8vw, 100px);
+  width: clamp(60px, 8vw, 100px);
+  border-radius: 15px;
+  cursor: pointer;
+  z-index: 10000;
 }
 
 .rounded-btn {

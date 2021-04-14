@@ -251,8 +251,6 @@ export default {
         type="range"
       />
 
-      <div class="settings"></div>
-
       <div v-if="formError" class="response error">
         <p>{{ formError }}</p>
       </div>
