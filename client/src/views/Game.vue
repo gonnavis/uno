@@ -29,6 +29,9 @@ export default {
       canDrawClient: true,
       canPlayClient: true,
       showSettings: false,
+      turnTimer: null,
+      turnTimerInterval: null,
+      forcePlayOfDrawnCard: false,
     };
   },
   computed: {
@@ -103,13 +106,51 @@ export default {
     },
   },
   watch: {
+    playableCardCount(count, oldCount) {
+      if (
+        oldCount === 0 &&
+        count === 1 &&
+        this.forcePlayOfDrawnCard &&
+        this.turnTimer === null
+      ) {
+        this.forcePlayOfDrawnCard = false;
+        setTimeout(
+          () =>
+            document
+              .querySelector(
+                `.cards.you .card:nth-of-type(${this.playerCards.findIndex(
+                  (c) => c.playable
+                )})`
+              )
+              .click(),
+          1000
+        );
+      }
+    },
     isTurn(val) {
       if (val) {
         this.canDrawClient = true;
         this.canPlayClient = true;
+
+        // start turn timer if player is not being skipped
+        if (this.room.you.canPlay) {
+          this.turnTimer = 20;
+          this.turnTimerInterval = setInterval(() => {
+            this.turnTimer--;
+
+            if (this.turnTimer === 0) {
+              this.turnTimer = null;
+              clearInterval(this.turnTimerInterval);
+              this.forcePlay();
+            }
+          }, 1000);
+        }
       } else {
         this.canDrawClient = false;
         this.canPlayClient = false;
+
+        this.turnTimer = null;
+        clearInterval(this.turnTimerInterval);
       }
     },
     playerCards(cards, oldCards) {
@@ -256,6 +297,26 @@ export default {
     },
   },
   methods: {
+    forcePlay() {
+      if (!this.canPlayClient || !this.room.you.canPlay) return;
+
+      if (this.playableCardCount === 0) {
+        this.drawCard();
+        this.forcePlayOfDrawnCard = true;
+      } else {
+        setTimeout(
+          () =>
+            document
+              .querySelector(
+                `.cards.you .card:nth-of-type(${
+                  this.playerCards.findIndex((c) => c.playable) + 1
+                })`
+              )
+              .click(),
+          1000
+        );
+      }
+    },
     leaveRoom() {
       this.$store.state.socket.emit("leave-room");
       this.$store.commit("RESET_ROOM");
@@ -362,6 +423,12 @@ export default {
 
     <div class="hud">
       <h1 class="stack-count" v-if="room.stack > 0">+{{ room.stack }}</h1>
+      <div
+        class="turn-timer"
+        v-if="turnTimer !== null && room.you.canPlay && canPlayClient"
+      >
+        {{ turnTimer }}
+      </div>
 
       <u-game-stack
         :applyDrawClass="
@@ -497,6 +564,23 @@ $table-rotatex: 58deg;
     font-size: clamp(3rem, 8vw, 6rem);
     -webkit-text-stroke: black clamp(2px, 0.5vw, 5px);
     text-align: center;
+    z-index: 200;
+  }
+
+  .turn-timer {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    bottom: 40px;
+    right: 10px;
+    background: black;
+    width: clamp(5rem, 10vw, 12rem);
+    height: clamp(5rem, 10vw, 12rem);
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 700;
+    border-radius: 50%;
+    color: white;
   }
 
   .start-btn {
