@@ -16,6 +16,8 @@ interface RoomInterface {
   winner: Player | null;
   isRoomEmpty: boolean;
   maxPlayers: number;
+  inactivityTimer: number;
+  inactivityTimerInterval: NodeJS.Timeout | null;
 
   addPlayer(player: Player): void;
   removePlayer(player: Player): void;
@@ -41,6 +43,8 @@ export default class Room implements RoomInterface {
   winner: Player | null = null;
   isRoomEmpty: boolean = false;
   maxPlayers: number = 4;
+  inactivityTimer: number = 0;
+  inactivityTimerInterval: NodeJS.Timeout | null = null;
 
   constructor(host: Player, id: string = "") {
     this.id = id || uuid().substr(0, 7);
@@ -113,6 +117,15 @@ export default class Room implements RoomInterface {
     this.started = true;
 
     this.broadcastState();
+
+    // start inactivity timer
+    this.inactivityTimerInterval = setInterval(async () => {
+      this.inactivityTimer++;
+
+      if (this.inactivityTimer === 300) {
+        this.players.forEach((p) => (!p.bot ? this.removePlayer(p, false) : null));
+      }
+    }, 1000);
   }
 
   // giveCard takes the first card from the deck array and pushes it onto player's cards
@@ -236,6 +249,9 @@ export default class Room implements RoomInterface {
   }
 
   async nextTurn(skip: boolean = false, draw: number = 0) {
+    // reset inactivity timer
+    this.inactivityTimer = 0;
+
     this.turn.clearPlayableCards();
     this.turn.canDraw = false;
     this.turn.canPlay = false;
