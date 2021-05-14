@@ -20,6 +20,7 @@ export default {
             action: "Settings",
             graphic: require("@/assets/settings.jpg"),
             level: "settings",
+            func: () => (this.showSettingsModal = true),
           },
         ],
         soloTitle: "Solo Game",
@@ -50,7 +51,10 @@ export default {
         },
         onlineRoom: [],
         settingsTitle: "Settings",
-        settingsBack: () => (this.currentLevel = "main"),
+        settingsBack: () => {
+          this.currentLevel = "main";
+          this.showSettingsModal = false;
+        },
         settings: [],
       },
     };
