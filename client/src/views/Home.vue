@@ -28,6 +28,7 @@ export default {
       optionsWidth: 0,
       showCreateRoomModal: false,
       showJoinRoomModal: false,
+      showSettingsModal: false,
     };
   },
   computed: {
@@ -283,6 +284,16 @@ export default {
       </div>
 
       <u-menu-btn @click="joinRoom()">Join Room</u-menu-btn>
+    </u-menu-modal>
+
+    <u-menu-modal
+      v-if="showSettingsModal"
+      title="Settings"
+      @close="backOptions"
+    >
+      <u-menu-btn class="btn rounded-btn" @click="backOptions">
+        Exit
+      </u-menu-btn>
     </u-menu-modal>
 
     <div
