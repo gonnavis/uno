@@ -294,6 +294,18 @@ export default {
           });
         }
       }
+
+      // call uno animation
+      const players = ["you", ...others];
+      for (let i = 0; i < players.length; i++) {
+        const player = players[i];
+
+        if (!room[player]) continue;
+
+        if (room[player].calledUno && !oldRoom[player].calledUno) {
+          this.playCallUnoAnimation(player);
+        }
+      }
     },
   },
   methods: {
@@ -347,6 +359,46 @@ export default {
 
       this.$store.state.socket.emit("play-card", index);
     },
+    callUno() {
+      this.$store.state.socket.emit("call-uno");
+      this.hasCalledUnoClient = true;
+    },
+    playCallUnoAnimation(p) {
+      let transform = "scale(1) ";
+      let anchor = "";
+      switch (p) {
+        case "you":
+          anchor = "bottom";
+          transform += "translate(0, -35vh)";
+          break;
+        case "right":
+          anchor = "right";
+          transform += "translate(-35vh)";
+          break;
+        case "top":
+          anchor = "top";
+          transform += "translate(0, 35vh)";
+          break;
+        case "left":
+          anchor = "left";
+          transform += "translate(35vh)";
+          break;
+        default:
+          break;
+      }
+
+      this.$nextTick(() => {
+        this.$refs.unoAlert.style[anchor] = "4vh";
+        window.requestAnimationFrame(() => {
+          this.$refs.unoAlert.style.transform = transform;
+        });
+
+        setTimeout(() => {
+          this.$refs.unoAlert.style.transform = "";
+          setTimeout(() => (this.$refs.unoAlert.style[anchor] = ""), 650);
+        }, 900);
+      });
+    },
   },
   mounted() {
     if (!this.room.id) return this.$router.push({ name: "Home" });
@@ -389,6 +441,8 @@ export default {
       v-if="pickColor"
       @pick-color="wildcardColor = $event"
     />
+
+    <img ref="unoAlert" class="uno-alert" src="@/assets/logo.png" alt="" />
 
     <div class="animation-cards">
       <Card
@@ -485,10 +539,7 @@ export default {
         "
         src="@/assets/logo.png"
         class="uno-btn"
-        @click="
-          $store.state.socket.emit('call-uno');
-          hasCalledUnoClient = true;
-        "
+        @click="callUno"
       />
     </div>
   </div>
@@ -541,6 +592,14 @@ $table-rotatex: 58deg;
   &:hover {
     background-color: #ff8e0d;
   }
+}
+
+.uno-alert {
+  position: absolute;
+  z-index: 1002;
+  height: 35%;
+  transform: scale(0);
+  transition: transform 0.6s ease;
 }
 
 .hud {

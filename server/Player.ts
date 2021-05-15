@@ -99,18 +99,18 @@ export default class Player implements PlayerInterface {
   botPlay(room: Room) {
     setTimeout(async () => {
       if (!this.cards) return;
-
       if (this.cards.findIndex((c) => c.playable) === -1) await room.drawCards(this);
 
       const playableCards = this.cards.filter((c) => c.playable);
 
       const card = playableCards[Math.floor(Math.random() * playableCards.length)];
-      if (card.type === CardType.Plus4 || card.type === CardType.Wildcard) {
+      if (card && (card.type === CardType.Plus4 || card.type === CardType.Wildcard)) {
         card.color = Math.floor(Math.random() * 4);
       }
 
       if (this.cards.length === 2 && Math.random() > 0.3) {
         this.hasCalledUno = true;
+        room.broadcastState();
       }
 
       room.playCard(

@@ -110,6 +110,7 @@ export default function(socket: Socket) {
       return;
 
     player.hasCalledUno = true;
+    rooms[player.roomId].broadcastState();
   });
 
   socket.on("draw-card", () => {

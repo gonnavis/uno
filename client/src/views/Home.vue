@@ -292,7 +292,7 @@ export default {
       @close="backOptions"
     >
       <u-menu-btn class="btn rounded-btn" @click="backOptions">
-        Exit
+        Main Menu
       </u-menu-btn>
     </u-menu-modal>
 

@@ -96,7 +96,7 @@ export default class Room implements RoomInterface {
 
     // give players cards
     this.players.forEach((p) => {
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < 2; i++) {
         this.giveCard(p);
       }
 
@@ -359,6 +359,7 @@ export default class Room implements RoomInterface {
           ...player,
           count: player.cards.length,
           socket: undefined,
+          calledUno: player.hasCalledUno,
         },
         right: right
           ? {
@@ -366,6 +367,7 @@ export default class Room implements RoomInterface {
               count: right.cards.length,
               id: right.id,
               isBot: right.bot,
+              calledUno: right.hasCalledUno,
             }
           : undefined,
         top: top
@@ -374,6 +376,7 @@ export default class Room implements RoomInterface {
               count: top.cards.length,
               id: top.id,
               isBot: top.bot,
+              calledUno: top.hasCalledUno,
             }
           : undefined,
         left: left
@@ -382,6 +385,7 @@ export default class Room implements RoomInterface {
               count: left.cards.length,
               id: left.id,
               isBot: left.bot,
+              calledUno: left.hasCalledUno,
             }
           : undefined,
         winner,
