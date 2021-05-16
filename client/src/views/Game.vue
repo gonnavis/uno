@@ -114,17 +114,7 @@ export default {
         this.turnTimer === null
       ) {
         this.forcePlayOfDrawnCard = false;
-        setTimeout(
-          () =>
-            document
-              .querySelector(
-                `.cards.you .card:nth-of-type(${this.playerCards.findIndex(
-                  (c) => c.playable
-                )})`
-              )
-              .click(),
-          1000
-        );
+        this.forcePlay();
       }
     },
     isTurn(val) {
@@ -301,17 +291,32 @@ export default {
         this.drawCard();
         this.forcePlayOfDrawnCard = true;
       } else {
+        const cardIndex = this.playerCards.findIndex((c) => c.playable);
+        const card = this.playerCards[cardIndex];
+
+        // click card
         setTimeout(
           () =>
             document
-              .querySelector(
-                `.cards.you .card:nth-of-type(${
-                  this.playerCards.findIndex((c) => c.playable) + 1
-                })`
-              )
+              .querySelector(`.cards.you .card:nth-of-type(${cardIndex + 1})`)
               .click(),
           1000
         );
+
+        // pick color if wildcard
+        if (card.type === 4 || card.type === 5) {
+          setTimeout(
+            () =>
+              document
+                .querySelector(
+                  `.color-picker .container button:nth-of-type(${
+                    Math.floor(Math.random() * 4) + 1
+                  })`
+                )
+                .click(),
+            2500
+          );
+        }
       }
     },
     leaveRoom() {
