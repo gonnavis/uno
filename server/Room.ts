@@ -96,7 +96,7 @@ export default class Room implements RoomInterface {
 
     // give players cards
     this.players.forEach((p) => {
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 7; i++) {
         this.giveCard(p);
       }
 

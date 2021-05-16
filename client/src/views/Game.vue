@@ -129,22 +129,7 @@ export default {
     },
     isTurn(val) {
       if (val) {
-        this.canDrawClient = true;
-        this.canPlayClient = true;
-
-        // start turn timer if player is not being skipped
-        if (this.room.you.canPlay) {
-          this.turnTimer = 20;
-          this.turnTimerInterval = setInterval(() => {
-            this.turnTimer--;
-
-            if (this.turnTimer === 0) {
-              this.turnTimer = null;
-              clearInterval(this.turnTimerInterval);
-              this.forcePlay();
-            }
-          }, 1000);
-        }
+        this.startPlayersTurn();
       } else {
         this.canDrawClient = false;
         this.canPlayClient = false;
@@ -399,12 +384,36 @@ export default {
         }, 900);
       });
     },
+    startPlayersTurn() {
+      this.canDrawClient = true;
+      this.canPlayClient = true;
+
+      // start turn timer if player is not being skipped
+      if (this.room.you.canPlay) {
+        this.turnTimer = 20;
+        this.turnTimerInterval = setInterval(() => {
+          if (this.drawing) return;
+
+          this.turnTimer--;
+
+          if (this.turnTimer === 0) {
+            this.turnTimer = null;
+            clearInterval(this.turnTimerInterval);
+            this.forcePlay();
+          }
+        }, 1000);
+      }
+    },
   },
   mounted() {
     if (!this.room.id) return this.$router.push({ name: "Home" });
 
     window.onblur = () => (this.$store.state.animateCards = []);
     window.onfocus = () => (this.$store.state.animateCards = []);
+
+    if (this.isTurn) {
+      this.startPlayersTurn();
+    }
   },
   beforeDestroy() {
     this.leaveRoom();
