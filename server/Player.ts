@@ -62,7 +62,8 @@ export default class Player implements PlayerInterface {
       const color: CardColor = CardColor[s as keyof typeof CardColor];
 
       this.cards.forEach((c) => {
-        if (c.color === color || c.type === CardType[s as keyof typeof CardType]) cardColors[s].push(c);
+        if (c && (c.color === color || c.type === CardType[s as keyof typeof CardType]))
+          cardColors[s].push(c);
       });
 
       // sort number cards
@@ -93,7 +94,7 @@ export default class Player implements PlayerInterface {
   }
 
   findPlayableCards(topCard: Card) {
-    this.cards.forEach((card) => card.checkIfPlayable(topCard, this.mustStack));
+    this.cards.forEach((card) => (card ? card.checkIfPlayable(topCard, this.mustStack) : null));
   }
 
   botPlay(room: Room) {
@@ -105,6 +106,9 @@ export default class Player implements PlayerInterface {
 
       const card = playableCards[Math.floor(Math.random() * playableCards.length)];
       if (card && (card.type === CardType.Plus4 || card.type === CardType.Wildcard)) {
+        room.wildcard = card;
+        room.broadcastState();
+        await sleep(2000);
         card.color = Math.floor(Math.random() * 4);
       }
 
@@ -119,4 +123,8 @@ export default class Player implements PlayerInterface {
       );
     }, 1500);
   }
+}
+
+function sleep(time: number) {
+  return new Promise((resolve) => setTimeout(resolve, time));
 }

@@ -39,6 +39,8 @@ export default class Deck {
     for (let type: CardType = CardType.Wildcard; type <= CardType.Plus4; type++) {
       this.cards.push(new Card(-1, CardColor.None, type));
       this.cards.push(new Card(-1, CardColor.None, type));
+      this.cards.push(new Card(-1, CardColor.None, type));
+      this.cards.push(new Card(-1, CardColor.None, type));
     }
   }
 

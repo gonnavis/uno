@@ -199,74 +199,15 @@ export default {
       const others = ["right", "top", "left"];
       for (let i = 0; i < others.length; i++) {
         const other = others[i];
-
         if (!room[other]) continue;
 
-        let transform;
-        if (other === "right") {
-          transform =
-            "rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg) scale(0.75)";
-        } else if (other === "left") {
-          transform =
-            "rotate(-15deg) rotateY(-50deg) rotateZ(-5deg) rotateX(20deg) scale(0.75)";
-        } else {
-          transform = "scale(0.6)";
-        }
-
         const card = room.pile[room.pile.length - 1];
-        const cardElement = document.querySelector(
-          `.cards.other.${other} :nth-of-type(${Math.ceil(
-            Math.random() * room[other].count
-          )})`
-        );
-        if (!cardElement) continue;
 
         // play card animation
         if (room[other].count < oldRoom[other].count) {
-          const box = cardElement.getBoundingClientRect();
-          const centerX = window.innerWidth / 2;
-          const centerY = window.innerHeight / 2;
-
-          this.$store.commit("ADD_ANIMATE_CARD", {
-            ...card,
-            steps: 1,
-            other: true,
-            isTransitionComplete: false,
-            start: {
-              x: box.x,
-              y: box.y,
-            },
-            dest: {
-              x: centerX - box.width / 2 - 25,
-              y: centerY - box.height / 2 - 30,
-            },
-            transform: transform,
-          });
+          this.animateOtherPlayCard(other, card, true);
         } else if (room[other].count > oldRoom[other].count) {
-          const startBox = document
-            .getElementById("stack-top-card")
-            .getBoundingClientRect();
-          const destBox = cardElement.getBoundingClientRect();
-
-          this.$store.commit("ADD_ANIMATE_CARD", {
-            ...card,
-            steps: 1,
-            draw: true,
-            other: true,
-            isTransitionComplete: false,
-            drawnIndex: this.room.you.lastDrawnCard,
-            start: {
-              x: startBox.x,
-              y: startBox.y,
-            },
-            dest: {
-              x: destBox.x,
-              y: destBox.y,
-            },
-            transform:
-              "rotate(-30deg) rotateY(20deg) rotateX(20deg) scale(0.85)",
-            endTransform: transform,
-          });
+          this.animateOtherPlayCard(other, card, false);
         }
       }
 
@@ -281,42 +222,127 @@ export default {
           this.playCallUnoAnimation(player);
         }
       }
+
+      // handle wildcard animation
+      if (room.wildcard && room.turn !== room.you.id) {
+        let other = "";
+        if (room.right && room.right.id === room.turn) other = "right";
+        else if (room.left && room.left.id === room.turn) other = "left";
+        else other = "top";
+
+        this.animateOtherPlayCard(other, room.wildcard, true);
+      }
     },
   },
   methods: {
+    animateOtherPlayCard(player, card, toStack) {
+      let transform;
+      if (player === "right") {
+        transform =
+          "rotate(15deg) rotateY(50deg) rotateZ(5deg) rotateX(20deg) scale(0.75)";
+      } else if (player === "left") {
+        transform =
+          "rotate(-15deg) rotateY(-50deg) rotateZ(-5deg) rotateX(20deg) scale(0.75)";
+      } else {
+        transform = "scale(0.6)";
+      }
+
+      const cardElement = document.querySelector(
+        `.cards.other.${player} :nth-of-type(${Math.ceil(
+          Math.random() * this.room[player].count
+        )})`
+      );
+      if (!cardElement) return;
+
+      if (toStack) {
+        const box = cardElement.getBoundingClientRect();
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+
+        this.$store.commit("ADD_ANIMATE_CARD", {
+          ...card,
+          steps: 1,
+          other: true,
+          isTransitionComplete: false,
+          start: {
+            x: box.x,
+            y: box.y,
+          },
+          dest: {
+            x: centerX - box.width / 2 - 25,
+            y: centerY - box.height / 2 - 30,
+          },
+          transform: transform,
+        });
+      } else {
+        const startBox = document
+          .getElementById("stack-top-card")
+          .getBoundingClientRect();
+        const destBox = cardElement.getBoundingClientRect();
+
+        this.$store.commit("ADD_ANIMATE_CARD", {
+          ...card,
+          steps: 1,
+          draw: true,
+          other: true,
+          isTransitionComplete: false,
+          drawnIndex: this.room.you.lastDrawnCard,
+          start: {
+            x: startBox.x,
+            y: startBox.y,
+          },
+          dest: {
+            x: destBox.x,
+            y: destBox.y,
+          },
+          transform: "rotate(-30deg) rotateY(20deg) rotateX(20deg) scale(0.85)",
+          endTransform: transform,
+        });
+      }
+    },
+    pickWildcardColor(index) {
+      this.pickColor = true;
+      this.wildcardIndex = index;
+      this.$store.state.socket.emit(
+        "play-wildcard",
+        this.playerCards[index].type
+      );
+    },
     forcePlay() {
-      if (!this.canPlayClient || !this.room.you.canPlay) return;
+      if (!this.canPlayClient || !this.room.you.canPlay || this.turnTimer > 0)
+        return;
 
       if (this.playableCardCount === 0) {
         this.drawCard();
         this.forcePlayOfDrawnCard = true;
-      } else {
-        const cardIndex = this.playerCards.findIndex((c) => c.playable);
-        const card = this.playerCards[cardIndex];
+        return;
+      }
 
-        // click card
+      const cardIndex = this.playerCards.findIndex((c) => c.playable);
+      const card = this.playerCards[cardIndex];
+
+      // click card
+      setTimeout(
+        () =>
+          document
+            .querySelector(`.cards.you .card:nth-of-type(${cardIndex + 1})`)
+            .click(),
+        1000
+      );
+
+      // pick color if wildcard
+      if (card.type === 4 || card.type === 5) {
         setTimeout(
           () =>
             document
-              .querySelector(`.cards.you .card:nth-of-type(${cardIndex + 1})`)
+              .querySelector(
+                `.color-picker .container button:nth-of-type(${
+                  Math.floor(Math.random() * 4) + 1
+                })`
+              )
               .click(),
-          1000
+          2500
         );
-
-        // pick color if wildcard
-        if (card.type === 4 || card.type === 5) {
-          setTimeout(
-            () =>
-              document
-                .querySelector(
-                  `.color-picker .container button:nth-of-type(${
-                    Math.floor(Math.random() * 4) + 1
-                  })`
-                )
-                .click(),
-            2500
-          );
-        }
       }
     },
     leaveRoom() {
@@ -452,7 +478,8 @@ export default {
     </u-menu-modal>
 
     <u-game-color-picker
-      v-if="pickColor"
+      v-if="pickColor || (room.wildcard && !isTurn)"
+      :isTurn="isTurn"
       @pick-color="wildcardColor = $event"
     />
 
@@ -524,10 +551,7 @@ export default {
           :type="card.type"
           :playable="card.playable && isTurn && !drawing && room.you.canPlay"
           @card-played="playCard"
-          @pick-color="
-            pickColor = true;
-            wildcardIndex = $event;
-          "
+          @pick-color="pickWildcardColor"
         />
       </div>
 

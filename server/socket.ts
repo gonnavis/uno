@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { CardColor, CardType } from "./Card";
+import { Card, CardColor, CardType } from "./Card";
 import Player from "./Player";
 import Room from "./Room";
 
@@ -136,5 +136,16 @@ export default function(socket: Socket) {
     }
 
     room.playCard(player, index);
+  });
+
+  socket.on("play-wildcard", (type: CardType) => {
+    if (!player.inRoom || !(type === CardType.Plus4 || type === CardType.Wildcard)) return;
+
+    const room = rooms[player.roomId];
+    if (!room.started || room.turn.id !== player.id || player.cards.findIndex((c) => c.type === type) !== -1)
+      return;
+
+    room.wildcard = new Card(-1, CardColor.None, type);
+    room.broadcastState();
   });
 }

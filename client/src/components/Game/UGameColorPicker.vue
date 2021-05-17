@@ -1,11 +1,17 @@
 <script>
 export default {
   name: "UGameColorPicker",
+  props: {
+    isTurn: {
+      type: Boolean,
+      default: false,
+    },
+  },
 };
 </script>
 
 <template>
-  <div class="color-picker">
+  <div class="color-picker" :style="{ pointerEvents: !isTurn ? 'none' : null }">
     <div class="container">
       <button @click="$emit('pick-color', 0)" class="red"></button>
       <button @click="$emit('pick-color', 1)" class="green"></button>

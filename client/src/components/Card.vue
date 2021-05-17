@@ -112,8 +112,9 @@ export default {
         },
       });
 
-      this.$refs.card.style.marginLeft = `-${box.width}px`;
-      this.$refs.card.style.opacity = "0";
+      // this.$refs.card.style.marginLeft = `-${box.width}px`;
+      // this.$refs.card.style.opacity = "0";
+      this.$refs.card.classList.add("hidden");
 
       this.$emit("card-played", this.index);
     },
@@ -339,11 +340,11 @@ export default {
 
   &.hidden {
     opacity: 0;
-    // margin-left: -127px !important;
+    margin-left: -127px !important;
 
-    // @media screen and (max-width: 900px) {
-    //   margin-left: -63.5px !important;
-    // }
+    @media screen and (max-width: 900px) {
+      margin-left: -63.5px !important;
+    }
   }
 
   &:not(:first-of-type) {

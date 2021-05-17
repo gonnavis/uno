@@ -18,6 +18,7 @@ interface RoomInterface {
   maxPlayers: number;
   inactivityTimer: number;
   inactivityTimerInterval: NodeJS.Timeout | null;
+  wildcard: Card | null;
 
   addPlayer(player: Player): void;
   removePlayer(player: Player): void;
@@ -45,6 +46,7 @@ export default class Room implements RoomInterface {
   maxPlayers: number = 4;
   inactivityTimer: number = 0;
   inactivityTimerInterval: NodeJS.Timeout | null = null;
+  wildcard: Card | null = null;
 
   constructor(host: Player, id: string = "") {
     this.id = id || uuid().substr(0, 7);
@@ -162,7 +164,10 @@ export default class Room implements RoomInterface {
     // loops while:
     // - if amount is -1: player hasn't drawn a playable card
     // - else: draws until i === amount
-    while ((amount === -1 && drawn.findIndex((c) => c.playable) === -1) || (amount !== -1 && amount !== i)) {
+    while (
+      (amount === -1 && drawn.findIndex((c) => c.playable) === -1) ||
+      (amount !== -1 && amount !== i && !this.isRoomEmpty)
+    ) {
       drawn.push(this.giveCard(player));
       player.sortCards();
 
@@ -190,6 +195,9 @@ export default class Room implements RoomInterface {
       !player.cards[cardIndex].playable
     )
       return;
+
+    // reset wildcard
+    this.wildcard = null;
 
     // get card and remove from players cards
     const card = player.cards[cardIndex];
@@ -355,6 +363,7 @@ export default class Room implements RoomInterface {
         stack: this.stack,
         playerCount: this.players.length,
         maxPlayers: this.maxPlayers,
+        wildcard: this.wildcard,
         you: {
           ...player,
           count: player.cards.length,
