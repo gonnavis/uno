@@ -688,8 +688,8 @@ $table-rotatex: 58deg;
 
   .uno-btn {
     position: absolute;
-    bottom: 85px;
-    right: 60px;
+    bottom: 90px;
+    right: 15vw;
     width: 200px;
     cursor: pointer;
     animation: grow 2.5s ease-in-out infinite;
@@ -713,7 +713,6 @@ $table-rotatex: 58deg;
     @media screen and (max-width: $mobile) {
       transform: scale(0.7);
       bottom: 20px;
-      right: 30px;
       --start-transform: 0.7;
       --end-transform: 0.8;
     }
