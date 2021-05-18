@@ -6,6 +6,10 @@ export default {
       type: String,
       default: "Modal Title",
     },
+    hideClose: {
+      type: Boolean,
+      default: false,
+    },
   },
 };
 </script>
@@ -13,7 +17,7 @@ export default {
 <template>
   <div class="modal-container">
     <div class="modal">
-      <button class="close-btn" @click="$emit('close')">
+      <button v-if="!hideClose" class="close-btn" @click="$emit('close')">
         <div></div>
         <div></div>
       </button>

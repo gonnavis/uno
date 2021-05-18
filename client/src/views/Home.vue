@@ -168,6 +168,14 @@ export default {
           alert(`Sorry we couldn't copy the link to the clipboard: ${err}`)
         );
     },
+    closeJoinRoomModal() {
+      this.showJoinRoomModal = false;
+      this.formError = "";
+
+      if (this.currentLevel === "main") {
+        this.$router.replace({ query: null });
+      }
+    },
   },
   mounted() {
     this.isMounted = true;
@@ -261,10 +269,7 @@ export default {
 
     <u-menu-modal
       v-if="showJoinRoomModal"
-      @close="
-        showJoinRoomModal = false;
-        formError = '';
-      "
+      @close="closeJoinRoomModal"
       title="Join Room"
     >
       <u-menu-input
@@ -290,6 +295,8 @@ export default {
       v-if="showSettingsModal"
       title="Settings"
       @close="backOptions"
+      class="settings-modal"
+      hideClose
     >
       <u-menu-btn class="btn rounded-btn" @click="backOptions">
         Main Menu
@@ -345,6 +352,7 @@ img {
     position: absolute;
     top: 0;
     left: 0;
+    z-index: 1;
 
     .logo {
       margin-left: 10px;
@@ -454,6 +462,11 @@ img {
       border: 2px solid rgb(255, 0, 0);
       color: rgb(255, 0, 0);
     }
+  }
+
+  .settings-modal {
+    background: transparent;
+    z-index: 0;
   }
 }
 </style>

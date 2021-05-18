@@ -142,7 +142,7 @@ export default function(socket: Socket) {
     if (!player.inRoom || !(type === CardType.Plus4 || type === CardType.Wildcard)) return;
 
     const room = rooms[player.roomId];
-    if (!room.started || room.turn.id !== player.id || player.cards.findIndex((c) => c.type === type) !== -1)
+    if (!room.started || room.turn.id !== player.id || player.cards.findIndex((c) => c.type === type) === -1)
       return;
 
     room.wildcard = new Card(-1, CardColor.None, type);
