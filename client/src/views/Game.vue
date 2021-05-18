@@ -467,7 +467,7 @@ export default {
     <u-menu-modal
       v-if="room.winner"
       :title="`Congratulations to ${room.winner.username} on winning the game!`"
-      @close="leaveRoom"
+      hideClose
     >
       <button class="btn rounded-btn" @click="leaveRoom">Main Menu</button>
     </u-menu-modal>

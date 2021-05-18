@@ -294,7 +294,6 @@ export default {
     <u-menu-modal
       v-if="showSettingsModal"
       title="Settings"
-      @close="backOptions"
       class="settings-modal"
       hideClose
     >
