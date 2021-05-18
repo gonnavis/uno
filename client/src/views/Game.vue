@@ -84,6 +84,12 @@ export default {
     isTurn() {
       return this.room.turn === this.room.you.id;
     },
+    // currentPlayer() {
+    //   for (const p of ["you", "left", "right", "top"]) {
+    //     if (this.room[p] && this.room.turn === this.room[p].id)
+    //       return this.room[p];
+    //   }
+    // },
     // isPlayerDrawing() {
     //   let drawing = false;
     //   const animateCards = this.$store.state.animateCards;

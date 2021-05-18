@@ -369,6 +369,7 @@ export default class Room implements RoomInterface {
           count: player.cards.length,
           socket: undefined,
           calledUno: player.hasCalledUno,
+          skip: !player.canPlay && this.turn.id === player.id,
         },
         right: right
           ? {
@@ -377,6 +378,7 @@ export default class Room implements RoomInterface {
               id: right.id,
               isBot: right.bot,
               calledUno: right.hasCalledUno,
+              skip: !right.canPlay && this.turn.id === right.id,
             }
           : undefined,
         top: top
@@ -386,6 +388,7 @@ export default class Room implements RoomInterface {
               id: top.id,
               isBot: top.bot,
               calledUno: top.hasCalledUno,
+              skip: !top.canPlay && this.turn.id === top.id,
             }
           : undefined,
         left: left
@@ -395,6 +398,7 @@ export default class Room implements RoomInterface {
               id: left.id,
               isBot: left.bot,
               calledUno: left.hasCalledUno,
+              skip: !left.canPlay && this.turn.id === left.id,
             }
           : undefined,
         winner,

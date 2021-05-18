@@ -9,6 +9,7 @@ export default {
           right: {},
           left: {},
           top: {},
+          you: {},
         };
       },
     },
@@ -22,28 +23,28 @@ export default {
     <div
       v-if="room.you && room.started"
       class="player-card you"
-      :class="{ playing: isTurn }"
+      :class="{ playing: isTurn, skip: room.you.skip }"
     >
       {{ room.you.username }} : {{ room.you.count }}
     </div>
     <div
       v-if="room.right && room.started"
       class="player-card right"
-      :class="{ playing: room.turn === room.right.id }"
+      :class="{ playing: room.turn === room.right.id, skip: room.right.skip }"
     >
       {{ room.right.username }} : {{ room.right.count }}
     </div>
     <div
       v-if="room.left && room.started"
       class="player-card left"
-      :class="{ playing: room.turn === room.left.id }"
+      :class="{ playing: room.turn === room.left.id, skip: room.left.skip }"
     >
       {{ room.left.username }} : {{ room.left.count }}
     </div>
     <div
       v-if="room.top && room.started"
       class="player-card top"
-      :class="{ playing: room.turn === room.top.id }"
+      :class="{ playing: room.turn === room.top.id, skip: room.top.skip }"
     >
       {{ room.top.username }} : {{ room.top.count }}
     </div>
@@ -70,6 +71,27 @@ $mobile: 900px;
 
   &.playing {
     box-shadow: 0px 0px 8px 7px #fcc81c;
+  }
+
+  &.skip {
+    animation: skip 2s ease;
+    animation-fill-mode: forwards;
+
+    @keyframes skip {
+      from {
+        box-shadow: 0px 0px 5px 5px #ff0000;
+      }
+
+      50% {
+        box-shadow: 0px 0px 20px 14px #ff0000;
+        color: #a70000;
+        border-color: #a70000;
+      }
+
+      to {
+        box-shadow: 0px 0px 0px 0px #ff0000;
+      }
+    }
   }
 
   &.right {
