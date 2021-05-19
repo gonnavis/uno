@@ -10,9 +10,10 @@ const publicRooms: { host: string; code: string; maxPlayers: number; playerCount
 const validateSettings = (settings: any): Settings | false => {
   if (!settings || typeof settings !== "object") return false;
 
-  settings.maxPlayers = Number(settings.maxPlayers) || 0;
-
-  const requiredSettings: { key: string; type: string }[] = [
+  const requiredSettings: {
+    key: string;
+    type: string;
+  }[] = [
     { key: "maxPlayers", type: "number" },
     { key: "public", type: "boolean" },
     { key: "stacking", type: "boolean" },
@@ -20,6 +21,7 @@ const validateSettings = (settings: any): Settings | false => {
     { key: "drawToPlay", type: "boolean" },
     { key: "bluffing", type: "boolean" },
   ];
+
   for (const rs of requiredSettings) {
     if (settings[rs.key] === undefined || typeof settings[rs.key] !== rs.type) return false;
   }
@@ -52,7 +54,7 @@ export default function(socket: Socket) {
     if (!player.inRoom) return;
 
     const room = rooms[player.roomId];
-    room.removePlayer(player);
+    room.removePlayer(player, false);
 
     if (room.isRoomEmpty) delete rooms[room.id];
   };

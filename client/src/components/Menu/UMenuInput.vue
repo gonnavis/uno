@@ -33,8 +33,23 @@ export default {
   <div class="input">
     <label for="label">{{ label }}</label>
     <input
-      @input="$emit('input', $event.target.value)"
+      @input="
+        $emit(
+          'input',
+          ((type) => {
+            switch (type) {
+              case 'checkbox':
+                return $event.target.checked;
+              case 'range':
+                return Number($event.target.value);
+              default:
+                return $event.target.value;
+            }
+          })(type)
+        )
+      "
       :value="value"
+      :checked="value"
       name="label"
       :min="min"
       :max="max"

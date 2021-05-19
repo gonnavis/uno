@@ -20,11 +20,11 @@ export default {
         username: "",
         roomCode: "",
         settings: {
-          stacking: true,
-          forcePlay: true,
+          stacking: false,
+          forcePlay: false,
           bluffing: false,
-          drawToPlay: true,
-          public: true,
+          drawToPlay: false,
+          public: false,
           maxPlayers: 4,
         },
       },
@@ -134,10 +134,10 @@ export default {
       this.$store.state.socket.emit("create-room", {
         username: "You",
         settings: {
-          stacking: true,
-          forcePlay: true,
+          stacking: false,
+          forcePlay: false,
           bluffing: false,
-          drawToPlay: true,
+          drawToPlay: false,
           public: false,
           maxPlayers: 4,
         },
@@ -292,6 +292,12 @@ export default {
         v-model="createRoomForm.settings.maxPlayers"
         :label="`Max Players (${createRoomForm.settings.maxPlayers})`"
         type="range"
+      />
+
+      <u-menu-input
+        v-model="createRoomForm.settings.public"
+        label="Public (shown in public rooms list)"
+        type="checkbox"
       />
 
       <div v-if="formError" class="response error">

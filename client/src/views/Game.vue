@@ -135,6 +135,8 @@ export default {
       }
     },
     playerCards(cards, oldCards) {
+      if (!cards) return;
+
       // player draw card animation
       if (cards.length > oldCards.length) {
         const card = cards[this.room.you.lastDrawnCard];
@@ -184,6 +186,8 @@ export default {
       this.wildcardIndex = -1;
     },
     room(room, oldRoom) {
+      if (room.id === "") return this.$router.push({ name: "Home" });
+
       if (room.you.count === 2 && this.hasCalledUnoClient)
         this.hasCalledUnoClient = false;
 

@@ -79,7 +79,7 @@ export class Room implements RoomInterface {
       this.host = players[Math.floor(Math.random() * players.length)];
     }
 
-    if (replace && this.isRoomEmpty) {
+    if (replace && !this.isRoomEmpty) {
       // create replacement bot
       const bot = this.createBot(player);
       this.addBot(bot, player);
@@ -92,6 +92,13 @@ export class Room implements RoomInterface {
     player.roomId = "";
     player.inRoom = false;
     player.cards = [];
+
+    // if only 1 player is left and remove is not replaced then kick last player as game cannot be played
+    if (players.length === 1 && !replace && this.started) {
+      this.removePlayer(this.host, false);
+      this.host.socket?.emit("kicked");
+      console.log("kicked");
+    }
   }
 
   startGame() {
