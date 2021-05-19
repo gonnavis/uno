@@ -29,6 +29,9 @@ export default {
       showCreateRoomModal: false,
       showJoinRoomModal: false,
       showSettingsModal: false,
+      showPublicRoomsModal: false,
+      publicRooms: [],
+      fetchingPublicRooms: false,
     };
   },
   computed: {
@@ -176,6 +179,10 @@ export default {
         this.$router.replace({ query: null });
       }
     },
+    fetchPublicRooms() {
+      this.$store.state.socket.emit("get-public-rooms");
+      this.fetchingPublicRooms = true;
+    },
   },
   mounted() {
     this.isMounted = true;
@@ -190,9 +197,15 @@ export default {
       this.joinRoomForm.roomCode = roomCode;
       this.showJoinRoomModal = true;
     }
+
+    this.$store.state.socket.on("recieve-public-rooms", (rooms) => {
+      this.publicRooms = rooms;
+      this.fetchingPublicRooms = false;
+    });
   },
   destroyed() {
     observer.disconnect();
+    this.$store.state.socket.off("recieve-public-rooms");
   },
 };
 </script>
@@ -300,6 +313,42 @@ export default {
       <u-menu-btn class="btn rounded-btn" @click="backOptions">
         Main Menu
       </u-menu-btn>
+    </u-menu-modal>
+
+    <u-menu-modal
+      v-if="showPublicRoomsModal"
+      title="Public Rooms"
+      @close="showPublicRoomsModal = false"
+      class="public-rooms-modal"
+    >
+      <div class="room rooms-header">
+        <div>
+          <p class="host">Host</p>
+          <p class="code">Code</p>
+        </div>
+
+        <div>
+          <p class="players">Players</p>
+          <u-menu-btn class="join-btn" style="opacity: 0; pointer-events: none"
+            >Join</u-menu-btn
+          >
+        </div>
+      </div>
+      <div class="rooms">
+        <div class="room" v-for="room in publicRooms" :key="room.code">
+          <div>
+            <p class="host">{{ room.host }}</p>
+            <p class="code">{{ room.code }}</p>
+          </div>
+
+          <div>
+            <p class="players">{{ room.players }} / {{ room.maxPlayers }}</p>
+            <u-menu-btn class="join-btn">Join</u-menu-btn>
+          </div>
+        </div>
+      </div>
+
+      <u-menu-btn @click="fetchPublicRooms">Refresh</u-menu-btn>
     </u-menu-modal>
 
     <div
@@ -466,6 +515,80 @@ img {
   .settings-modal {
     background: transparent;
     z-index: 0;
+  }
+
+  .public-rooms-modal {
+    .rooms {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      height: 60vh;
+      overflow-y: scroll;
+
+      &::-webkit-scrollbar {
+        background: transparent;
+        width: 7px;
+
+        &::-webkit-scrollbar-thumb {
+          border-radius: 3px;
+          background-color: rgb(141, 141, 141);
+        }
+      }
+    }
+
+    .room {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 1rem;
+      height: 3rem;
+      margin: 0.4rem 0;
+
+      &.rooms-header {
+        width: 100%;
+        font-weight: bold;
+
+        .join-btn {
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .players {
+          margin-left: -7px;
+        }
+      }
+
+      div {
+        display: flex;
+        align-items: center;
+      }
+
+      .code {
+        position: absolute;
+        margin-left: 8rem;
+      }
+
+      .host {
+        max-width: 6rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .players {
+        margin-right: 1.2rem;
+      }
+
+      .join-btn {
+        font-size: 1rem;
+        padding: 0.6rem 1.2rem;
+        width: auto;
+        background-color: rgb(22, 179, 43);
+
+        &:hover {
+          background-color: rgb(54, 138, 65);
+        }
+      }
+    }
   }
 }
 </style>
