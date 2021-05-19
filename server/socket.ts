@@ -1,10 +1,48 @@
 import { Socket } from "socket.io";
 import { Card, CardColor, CardType } from "./Card";
 import Player from "./Player";
-import Room from "./Room";
+import { Room, Settings } from "./Room";
 
 const players: { [index: string]: Player } = {};
 const rooms: { [index: string]: Room } = {};
+const publicRooms: { host: string; code: string; maxPlayers: number; playerCount: number }[] = [];
+
+const validateSettings = (settings: any): Settings | false => {
+  if (!settings || typeof settings !== "object") return false;
+
+  settings.maxPlayers = Number(settings.maxPlayers) || 0;
+
+  const requiredSettings: { key: string; type: string }[] = [
+    { key: "maxPlayers", type: "number" },
+    { key: "public", type: "boolean" },
+    { key: "stacking", type: "boolean" },
+    { key: "forcePlay", type: "boolean" },
+    { key: "drawToPlay", type: "boolean" },
+    { key: "bluffing", type: "boolean" },
+  ];
+  for (const rs of requiredSettings) {
+    if (settings[rs.key] === undefined || typeof settings[rs.key] !== rs.type) return false;
+  }
+
+  const s = <Settings>settings;
+
+  if (s.maxPlayers < 2 || s.maxPlayers > 4) return false;
+
+  return s;
+};
+
+const updatePublicRoomPlayerCount = (player: Player, num: number) => {
+  if (rooms[player.roomId]?.settings.public) {
+    const i = publicRooms.findIndex((r) => r.code === player.roomId);
+    if (i === -1) return;
+
+    publicRooms[i].playerCount += num;
+
+    if (publicRooms[i].playerCount === 0) {
+      publicRooms.splice(i, 1);
+    }
+  }
+};
 
 export default function(socket: Socket) {
   const player = new Player(socket);
@@ -25,29 +63,36 @@ export default function(socket: Socket) {
     delete players[socket.id];
   });
 
-  socket.on("create-room", ({ username = "", roomCode = "", maxPlayers = "4" }) => {
+  socket.on("create-room", ({ username = "", roomCode = "", settings }) => {
     if (player.inRoom) return;
 
     // validate data
     if (username.length < 2 || username.length > 11) return;
     if (roomCode && (roomCode.length < 4 || roomCode.length > 12)) return;
 
-    const maxPlayersNum = Number(maxPlayers);
-    if (maxPlayersNum < 2 || maxPlayersNum > 4) return;
+    // validate settings
+    const s = validateSettings(settings);
+    if (!s) return;
 
     player.username = username;
 
     // create room
     let room;
     if (roomCode && !rooms[roomCode]) {
-      room = new Room(player, roomCode);
+      room = new Room(player, s, roomCode);
     } else {
-      room = new Room(player);
+      room = new Room(player, s);
     }
 
-    room.maxPlayers = maxPlayersNum;
-
     rooms[room.id] = room;
+
+    if (room.settings.public)
+      publicRooms.push({
+        host: room.host.username,
+        code: room.id,
+        maxPlayers: room.settings.maxPlayers,
+        playerCount: room.players.length,
+      });
   });
 
   socket.on("join-room", ({ username = "", roomCode = "" }) => {
@@ -59,20 +104,25 @@ export default function(socket: Socket) {
 
     // get room
     const room = rooms[roomCode];
-    if (!room || room.players.length === room.maxPlayers || room.started) return;
+    if (!room || room.players.length === room.settings.maxPlayers || room.started)
+      return socket.emit("kicked");
 
     player.username = username;
     room.addPlayer(player);
+
+    updatePublicRoomPlayerCount(player, 1);
   });
 
   socket.on("add-bot", () => {
     if (!player.inRoom) return;
 
     const room = rooms[player.roomId];
-    if (room.host.id !== player.id || room.players.length === room.maxPlayers) return;
+    if (room.host.id !== player.id || room.players.length === room.settings.maxPlayers) return;
 
     room.addBot(room.createBot());
     room.broadcastState();
+
+    updatePublicRoomPlayerCount(player, 1);
   });
 
   socket.on("kick-player", (id: string) => {
@@ -84,10 +134,14 @@ export default function(socket: Socket) {
     const remove = room.players.find((p) => p.id === id);
     if (!remove) return;
 
+    updatePublicRoomPlayerCount(player, -1);
+
     room.removePlayer(remove, false);
+    remove.socket?.emit("kicked");
   });
 
   socket.on("leave-room", () => {
+    updatePublicRoomPlayerCount(player, -1);
     leaveRoom();
   });
 
@@ -98,6 +152,12 @@ export default function(socket: Socket) {
     if (room.started || room.host.id !== player.id) return;
 
     room.startGame();
+
+    if (room.settings.public)
+      publicRooms.splice(
+        publicRooms.findIndex((r) => r.code === room.id),
+        1
+      );
   });
 
   socket.on("call-uno", () => {
@@ -147,5 +207,9 @@ export default function(socket: Socket) {
 
     room.wildcard = new Card(-1, CardColor.None, type);
     room.broadcastState();
+  });
+
+  socket.on("get-public-rooms", () => {
+    socket.emit("recieve-public-rooms", publicRooms);
   });
 }

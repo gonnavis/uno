@@ -3,6 +3,15 @@ import { Card, CardColor, CardType } from "./Card";
 import Deck from "./Deck";
 import Player from "./Player";
 
+export interface Settings {
+  stacking: boolean;
+  forcePlay: boolean;
+  bluffing: boolean;
+  drawToPlay: boolean;
+  public: boolean;
+  maxPlayers: number;
+}
+
 interface RoomInterface {
   id: string;
   started: boolean;
@@ -15,10 +24,10 @@ interface RoomInterface {
   stack: number;
   winner: Player | null;
   isRoomEmpty: boolean;
-  maxPlayers: number;
   inactivityTimer: number;
   inactivityTimerInterval: NodeJS.Timeout | null;
   wildcard: Card | null;
+  settings: Settings;
 
   addPlayer(player: Player): void;
   removePlayer(player: Player): void;
@@ -29,9 +38,7 @@ interface RoomInterface {
   refillDeckFromPile(): void;
 }
 
-// TODO add settings object (stacking, force play, bluffing, draw to play, etc)
-
-export default class Room implements RoomInterface {
+export class Room implements RoomInterface {
   id = "";
   started: boolean = false;
   host: Player;
@@ -43,15 +50,16 @@ export default class Room implements RoomInterface {
   stack: number = 0;
   winner: Player | null = null;
   isRoomEmpty: boolean = false;
-  maxPlayers: number = 4;
   inactivityTimer: number = 0;
   inactivityTimerInterval: NodeJS.Timeout | null = null;
   wildcard: Card | null = null;
+  settings: Settings;
 
-  constructor(host: Player, id: string = "") {
+  constructor(host: Player, settings: Settings, id: string = "") {
     this.id = id || uuid().substr(0, 7);
     this.host = host;
     this.turn = host;
+    this.settings = settings;
     this.addPlayer(host);
   }
 
@@ -356,13 +364,14 @@ export default class Room implements RoomInterface {
       const state = {
         id: this.id,
         isHost: this.host.id === player.id,
+        host: this.host.id,
         turn: this.turn.id,
         pile: this.pile,
         started: this.started,
         directionReversed: this.directionReversed,
         stack: this.stack,
         playerCount: this.players.length,
-        maxPlayers: this.maxPlayers,
+        maxPlayers: this.settings.maxPlayers,
         wildcard: this.wildcard,
         you: {
           ...player,

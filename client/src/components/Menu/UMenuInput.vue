@@ -3,7 +3,6 @@ export default {
   name: "UMenuInput",
   props: {
     value: {
-      type: String,
       required: true,
     },
     label: {

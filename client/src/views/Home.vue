@@ -19,7 +19,14 @@ export default {
       createRoomForm: {
         username: "",
         roomCode: "",
-        maxPlayers: "4",
+        settings: {
+          stacking: true,
+          forcePlay: true,
+          bluffing: false,
+          drawToPlay: true,
+          public: true,
+          maxPlayers: 4,
+        },
       },
       joinRoomForm: {
         username: "",
@@ -94,6 +101,10 @@ export default {
       if (room.started) {
         this.$router.push({ name: "Game" });
       }
+
+      if (room.id === "") {
+        this.currentLevel = "online";
+      }
     },
   },
   methods: {
@@ -120,7 +131,17 @@ export default {
       this.$store.state.socket.emit("create-room", this.createRoomForm);
     },
     createRoomSolo() {
-      this.$store.state.socket.emit("create-room", { username: "You" });
+      this.$store.state.socket.emit("create-room", {
+        username: "You",
+        settings: {
+          stacking: true,
+          forcePlay: true,
+          bluffing: false,
+          drawToPlay: true,
+          public: false,
+          maxPlayers: 4,
+        },
+      });
     },
     joinRoom() {
       // validate form
@@ -268,8 +289,8 @@ export default {
       />
 
       <u-menu-input
-        v-model="createRoomForm.maxPlayers"
-        :label="`Max Players (${createRoomForm.maxPlayers})`"
+        v-model="createRoomForm.settings.maxPlayers"
+        :label="`Max Players (${createRoomForm.settings.maxPlayers})`"
         type="range"
       />
 
@@ -342,8 +363,18 @@ export default {
           </div>
 
           <div>
-            <p class="players">{{ room.players }} / {{ room.maxPlayers }}</p>
-            <u-menu-btn class="join-btn">Join</u-menu-btn>
+            <p class="players">
+              {{ room.playerCount }} / {{ room.maxPlayers }}
+            </p>
+            <u-menu-btn
+              class="join-btn"
+              @click="
+                joinRoomForm.roomCode = room.code;
+                showPublicRoomsModal = false;
+                showJoinRoomModal = true;
+              "
+              >Join</u-menu-btn
+            >
           </div>
         </div>
       </div>
@@ -360,7 +391,7 @@ export default {
     >
       <u-menu-card
         v-for="(option, i) in options[currentLevel]"
-        :key="option.action + i"
+        :key="option.action + i || i"
         :action="option.action"
         :alwaysShowAction="option.alwaysShowAction || $store.state.isMobile"
         :graphic="option.graphic"

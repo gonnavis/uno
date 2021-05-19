@@ -46,7 +46,10 @@ export default {
           {
             action: "Public Rooms",
             graphic: require("@/assets/rooms.jpg"),
-            func: () => (this.showPublicRoomsModal = true),
+            func: () => {
+              this.showPublicRoomsModal = true;
+              this.fetchPublicRooms();
+            },
           },
         ],
         onlineRoomTitle: "Online Room",

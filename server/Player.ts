@@ -1,7 +1,7 @@
 import { Socket } from "socket.io";
 import { v4 as uuid } from "uuid";
 import { Card, CardColor, CardType } from "./Card";
-import Room from "./Room";
+import { Room } from "./Room";
 
 interface PlayerInterface {
   id: string;
