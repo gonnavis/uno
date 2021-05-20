@@ -25,6 +25,7 @@ const store = new Vuex.Store({
   state: {
     isMobile,
     isConnected: false,
+    isLandscape: screen.orientation.type.includes("landscape"),
     isOffline: !navigator.onLine,
     windowWidth: 1920,
     windowHeight: 1080,
@@ -46,6 +47,9 @@ const store = new Vuex.Store({
     },
     SET_IS_OFFLINE(state, status) {
       state.isOffline = status;
+    },
+    SET_IS_LANDSCAPE(state, bool) {
+      state.isLandscape = bool;
     },
 
     SET_ROOM(state, room) {
@@ -69,6 +73,10 @@ const store = new Vuex.Store({
 // isOffline listeners
 window.addEventListener("online", () => store.commit("SET_IS_OFFLINE", false));
 window.addEventListener("offline", () => store.commit("SET_IS_OFFLINE", true));
+
+// isLandscape listeners
+screen.orientation.onchange = () =>
+  store.commit("SET_IS_LANDSCAPE", screen.orientation.type.includes("landscape"));
 
 const resizeObserver = new ResizeObserver(() => {
   store.commit("SET_WINDOW_DIMENSIONS", { width: window.innerWidth, height: window.innerHeight });

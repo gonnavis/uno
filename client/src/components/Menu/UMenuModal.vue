@@ -4,7 +4,7 @@ export default {
   props: {
     title: {
       type: String,
-      default: "Modal Title",
+      default: "",
     },
     hideClose: {
       type: Boolean,
@@ -22,7 +22,7 @@ export default {
         <div></div>
       </button>
 
-      <h1 class="title">{{ title }}</h1>
+      <h1 v-if="title" class="title">{{ title }}</h1>
       <slot></slot>
     </div>
   </div>
@@ -55,6 +55,10 @@ export default {
     flex-direction: column;
     align-items: center;
 
+    @media screen and (max-width: 900px) {
+      padding: 1rem;
+    }
+
     &::-webkit-scrollbar {
       background: transparent;
       width: 0;
@@ -71,6 +75,7 @@ export default {
       position: absolute;
       top: 16px;
       right: 16px;
+      z-index: 10;
 
       &:hover {
         div {

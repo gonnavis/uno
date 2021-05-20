@@ -344,7 +344,6 @@ export default {
 
     <u-menu-modal
       v-if="showPublicRoomsModal"
-      title="Public Rooms"
       @close="showPublicRoomsModal = false"
       class="public-rooms-modal"
     >
@@ -385,7 +384,9 @@ export default {
         </div>
       </div>
 
-      <u-menu-btn @click="fetchPublicRooms">Refresh</u-menu-btn>
+      <u-menu-btn class="refresh-btn" @click="fetchPublicRooms"
+        >Refresh</u-menu-btn
+      >
     </u-menu-modal>
 
     <div
@@ -555,6 +556,11 @@ img {
   }
 
   .public-rooms-modal {
+    .refresh-btn {
+      font-size: 1.3rem;
+      padding: 0.9rem;
+    }
+
     .rooms {
       width: 100%;
       display: flex;
@@ -580,6 +586,7 @@ img {
       font-size: 1rem;
       height: 3rem;
       margin: 0.4rem 0;
+      position: relative;
 
       &.rooms-header {
         width: 100%;

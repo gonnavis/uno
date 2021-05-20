@@ -60,6 +60,7 @@ export default function(socket: Socket) {
   };
 
   socket.on("disconnect", () => {
+    updatePublicRoomPlayerCount(player, -1);
     leaveRoom();
 
     delete players[socket.id];

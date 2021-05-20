@@ -295,6 +295,7 @@ export class Room implements RoomInterface {
     // gets next player - works because if player should be skipped then turn has already been incremented above
     // so here next player acts as skip otherwise, just regular increment of next player
     this.turn = this.getNextPlayer();
+    if (!this.turn) return;
 
     this.turn.canDraw = true;
     this.turn.canPlay = true;
