@@ -233,6 +233,14 @@ export default {
 
 <template>
   <section class="home">
+    <a
+      class="watermark"
+      href="https://freddienelson.co.uk"
+      rel="noopener"
+      target="_blank"
+      >made by <span>Freddie</span></a
+    >
+
     <header class="header">
       <img
         v-if="currentLevel === 'main'"
@@ -413,6 +421,20 @@ export default {
 
 <style lang="scss" scoped>
 $mobile: 900px;
+
+.watermark {
+  color: white;
+  opacity: 0.5;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  position: absolute;
+  bottom: 1.5vh;
+  right: 1.1vw;
+  font-weight: bold;
+
+  span {
+    text-decoration: underline;
+  }
+}
 
 img {
   user-select: none;
