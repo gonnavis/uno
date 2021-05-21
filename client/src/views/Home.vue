@@ -308,6 +308,27 @@ export default {
         type="checkbox"
       />
 
+      <div class="rules">
+        <u-menu-input
+          v-model="createRoomForm.settings.forcePlay"
+          label="Force Play"
+          type="checkbox"
+          class="rule"
+        />
+        <u-menu-input
+          v-model="createRoomForm.settings.drawToPlay"
+          label="Draw To Play"
+          type="checkbox"
+          class="rule"
+        />
+        <u-menu-input
+          v-model="createRoomForm.settings.bluffing"
+          label="Bluffing"
+          type="checkbox"
+          class="rule"
+        />
+      </div>
+
       <div v-if="formError" class="response error">
         <p>{{ formError }}</p>
       </div>
@@ -504,6 +525,23 @@ img {
           margin-left: 120px;
         }
       }
+    }
+  }
+
+  // .rules-title {
+  //   font-size: 1.6rem;
+  //   font-weight: bold;
+  //   margin: 1rem auto 0.5rem 0;
+  // }
+
+  .rules {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+
+    .rule {
+      width: auto;
+      align-items: center;
     }
   }
 
