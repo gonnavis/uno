@@ -103,6 +103,7 @@ export default class Player implements PlayerInterface {
       if (this.cards.findIndex((c) => c.playable) === -1) await room.drawCards(this);
 
       const playableCards = this.cards.filter((c) => c.playable);
+      if (room.turn.id !== this.id || playableCards.length === 0) return;
 
       const card = playableCards[Math.floor(Math.random() * playableCards.length)];
       if (card && (card.type === CardType.Plus4 || card.type === CardType.Wildcard)) {

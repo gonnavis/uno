@@ -32,6 +32,7 @@ export default {
       turnTimer: null,
       turnTimerInterval: null,
       forcePlayOfDrawnCard: false,
+      showKeepCard: false,
     };
   },
   computed: {
@@ -331,6 +332,8 @@ export default {
       const cardIndex = this.playerCards.findIndex((c) => c.playable);
       const card = this.playerCards[cardIndex];
 
+      this.showKeepCard = false;
+
       // click card
       setTimeout(
         () =>
@@ -445,12 +448,30 @@ export default {
         }, 1000);
       }
     },
+    choicePlayCard() {
+      setTimeout(
+        () =>
+          document
+            .querySelector(
+              `.cards.you .card:nth-of-type(${
+                this.playerCards.findIndex((c) => c.playable) + 1
+              })`
+            )
+            .click(),
+        800
+      );
+      this.showKeepCard = false;
+    },
   },
   mounted() {
     if (!this.room.id) return this.$router.push({ name: "Home" });
 
     window.onblur = () => (this.$store.state.animateCards = []);
     window.onfocus = () => (this.$store.state.animateCards = []);
+
+    this.$store.state.socket.on("can-keep-card", () => {
+      this.showKeepCard = true;
+    });
 
     if (this.isTurn) {
       this.startPlayersTurn();
@@ -462,6 +483,8 @@ export default {
   destroyed() {
     window.onblur = null;
     window.onfocus = null;
+
+    this.$store.state.socket.off("can-keep-card");
   },
 };
 </script>
@@ -545,6 +568,20 @@ export default {
         "
         @draw-card="drawCard"
       />
+
+      <div v-if="showKeepCard" class="keep-card-option">
+        <u-menu-btn
+          class="keep-btn"
+          @click="
+            $store.state.socket.emit('keep-card');
+            showKeepCard = false;
+          "
+          >Keep Card</u-menu-btn
+        >
+        <u-menu-btn class="play-btn" @click="choicePlayCard"
+          >Play Card</u-menu-btn
+        >
+      </div>
 
       <div
         v-if="room.you"
@@ -725,6 +762,41 @@ $table-rotatex: 58deg;
       bottom: 20px;
       --start-transform: 0.7;
       --end-transform: 0.8;
+    }
+  }
+
+  .keep-card-option {
+    display: flex;
+    z-index: 50;
+    width: 40vw;
+    max-width: 50rem;
+    position: absolute;
+    bottom: 30vh;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+
+    @media screen and (max-width: $mobile) {
+      width: 60vw;
+
+      .keep-btn,
+      .play-btn {
+        font-size: 1.1rem;
+        padding: 0.8rem;
+      }
+    }
+
+    .keep-btn,
+    .play-btn {
+      margin: 1rem;
+    }
+
+    .play-btn {
+      background-color: rgb(41, 173, 15);
+
+      &:hover {
+        background-color: rgb(56, 138, 39);
+      }
     }
   }
 }

@@ -212,6 +212,15 @@ export default function(socket: Socket) {
     room.broadcastState();
   });
 
+  socket.on("keep-card", () => {
+    if (!player.inRoom) return;
+
+    const room = rooms[player.roomId];
+    if (!room.started || room.turn.id !== player.id || !player.cards) return;
+
+    room.nextTurn();
+  });
+
   socket.on("get-public-rooms", () => {
     socket.emit("recieve-public-rooms", publicRooms);
   });

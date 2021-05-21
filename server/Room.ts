@@ -195,6 +195,26 @@ export class Room implements RoomInterface {
       await sleep(amount !== -1 ? 400 : 800);
 
       i++;
+
+      // handle drawing with custom rules
+      if (amount === -1 && !this.settings.drawToPlay) {
+        if (drawn.findIndex((c) => c.playable) === -1) {
+          await sleep(400);
+          player.drawing = false;
+          this.nextTurn();
+          return;
+        }
+
+        break;
+      }
+    }
+
+    // make last draw card only playable card
+    player.cards.forEach((c) => (c.playable = false));
+    player.cards[player.lastDrawnCard] ? (player.cards[player.lastDrawnCard].playable = true) : null;
+
+    if (amount === -1 && !this.settings.forcePlay) {
+      player.socket?.emit("can-keep-card");
     }
 
     player.drawing = false;

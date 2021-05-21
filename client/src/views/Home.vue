@@ -326,6 +326,7 @@ export default {
           label="Bluffing"
           type="checkbox"
           class="rule"
+          style="opacity: 0.5; pointer-events: none"
         />
       </div>
 
